@@ -1,0 +1,13 @@
+# Homebrew
+Cellar/
+opt/
+usr/
+*.plist
+
+# macOS system files
+.DS_Store
+
+# Node / PHP / Python stuff
+node_modules/
+vendor/
+*.lock

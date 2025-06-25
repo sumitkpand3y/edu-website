@@ -1,0 +1,27 @@
+{"leaders" :[
+  {
+    "id": 1,
+    "name": "Dr. Azad Moopen",
+    "position": "Chairman and Director",
+    "company": "Aster DM Healthcare",
+    "image": "https://f9e9317a.delivery.rocketcdn.me/wp-content/uploads/2022/12/imgam400x400px.png",
+    "introduction": "Dr. Azad Moopen is the Founder Chairman and Managing Director of Aster DM Healthcare, one of the largest private healthcare networks in the GCC and India. With over three decades of experience in healthcare, he has been instrumental in transforming healthcare delivery across multiple countries. Under his visionary leadership, Aster has grown from a single clinic to a multinational healthcare conglomerate. Dr. Moopen is also actively involved in various philanthropic activities and has received numerous awards for his contributions to healthcare and business excellence."
+  },
+  {
+    "id": 2,
+    "name": "Alisha Moopen",
+    "position": "Managing Director and Group CEO",
+    "company": "Aster DM Healthcare",
+    "image": "https://f9e9317a.delivery.rocketcdn.me/wp-content/uploads/2022/12/imgamaam400x400px.jpg",
+    "introduction": "Alisha Moopen serves as the Managing Director and Group CEO of Aster DM Healthcare. She brings a fresh perspective to healthcare management with her innovative approach to digital transformation and patient care. With an MBA from a prestigious institution, she has been driving the organization's strategic initiatives, focusing on technology integration, quality improvement, and expansion into new markets. Her leadership has been crucial in positioning Aster as a forward-thinking healthcare provider in the digital age."
+  },
+  {
+    "id": 3,
+    "name": "Kannan Srinivas",
+    "position": "Director",
+    "company": "Aster Health Academy",
+    "image": "https://f9e9317a.delivery.rocketcdn.me/wp-content/uploads/2022/12/imgks400x400px.jpg",
+    "introduction": "Kannan Srinivas serves as the Director of Aster Health Academy, bringing extensive experience in healthcare education and training. With a deep understanding of the healthcare industry's evolving needs, he has been instrumental in developing comprehensive training programs that bridge the gap between academic learning and practical healthcare delivery. His expertise in curriculum development and industry partnerships has helped establish Aster Health Academy as a leading institution for healthcare professional development."
+  }
+]
+}
