@@ -1,13 +1,39 @@
-
-
 "use client";
 // pages/index.js - Homepage Component
 import { useEffect, useState } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
+import { useCartActions } from "@/hooks/useCartActions";
+import { useAuth } from "@/hooks/useAuth";
+import { getAllCourses } from "@/hooks/courseApi"; // Adjust the import path as needed
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  addToCart,
+  getCartItems,
+  removeFromCart,
+  updateCartQuantity,
+} from "@/utils/cartApi";
+import { Minus, Plus } from "lucide-react";
 
 const Homepage = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // const { addToCart } = useCartActions(userId || "");
+  const handleAddToCart = async (courseId: string) => {
+    try {
+      await addToCart({ userId: user.id, courseId });
+
+      // ✅ Refetch the cart icon data
+      queryClient.invalidateQueries({ queryKey: ["cartItems", user.id] });
+
+      // 🔔 Optional: Show success toast
+    } catch (err) {
+      console.error("Failed to add to cart:", err);
+    }
+  };
+
   const [data, setData] = useState({
     popularCourses: [],
     clinicalCourses: [],
@@ -17,7 +43,13 @@ const Homepage = () => {
   });
 
   const [loading, setLoading] = useState(true);
-  const [cart, setCart] = useState([]);
+  // const [cart, setCart] = useState<(Course & { quantity: number })[]>([]);
+  const { data: cartItems = [] } = useQuery({
+    queryKey: ["cartItems", user?.id],
+    queryFn: () => getCartItems(user.id),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60, // 1 min cache
+  });
   const [likedCourses, setLikedCourses] = useState(new Set());
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,9 +61,33 @@ const Homepage = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch("/data/courses.json"); // or replace with API URL
-        const result = await res.json();
-        setData(result);
+        const result = await getAllCourses();
+
+        const clinicalCourses = result.courses.filter(
+          (course) => course.category === "clinical"
+        );
+
+        const managementCourses = result.courses.filter(
+          (course) => course.category === "management"
+        );
+
+        const certificationCourses = result.courses.filter(
+          (course) => (course) => course.category === "practice-excellence"
+        );
+
+        const popularCourses = result.courses
+          .filter((course) => course.rating >= 4.5)
+          .sort((a, b) => b.rating - a.rating)
+          .slice(0, 6); // top 6 popular ones
+
+        // Later you can fetch testimonials separately if needed
+        setData({
+          clinicalCourses,
+          managementCourses,
+          certificationCourses,
+          popularCourses,
+          testimonials: [], // or fetch and set separately
+        });
       } catch (err) {
         console.error("Error fetching course data:", err);
       } finally {
@@ -41,6 +97,23 @@ const Homepage = () => {
 
     fetchCourses();
   }, []);
+
+  const updateQuantity = async (courseId: string, quantity: number) => {
+    try {
+      if (quantity < 1) {
+        // 👋 Remove item if quantity is zero or less
+        await removeFromCart({ userId: user.id, courseId });
+      } else {
+        // ✅ Update item quantity
+        await updateCartQuantity({ userId: user.id, courseId, quantity });
+      }
+
+      // 🔄 Refetch cart data so UI updates
+      queryClient.invalidateQueries({ queryKey: ["cartItems", user.id] });
+    } catch (err) {
+      console.error("Failed to update quantity or remove item:", err);
+    }
+  };
 
   type Course = {
     id: number;
@@ -62,44 +135,45 @@ const Homepage = () => {
   };
 
   // Cart functions
-  const addToCart = (course: Course) => {
-    const existingItem = cart.find((item) => item.id === course.id);
-    if (existingItem) {
-      setCart(
-        cart.map((item) =>
-          item.id === course.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      );
-    } else {
-      setCart([...cart, { ...course, quantity: 1 }]);
-    }
-  };
+  // const addToCart = (course: Course) => {
+  // const existingItem = cart.find((item) => item.id === course.id);
+  // if (existingItem) {
+  //   setCart(
+  //     cart.map((item) =>
+  //       item.id === course.id
+  //         ? { ...item, quantity: item.quantity + 1 }
+  //         : item
+  //     )
+  //   );
+  // } else {
+  //   setCart([...cart, { ...course, quantity: 1 }]);
+  // }
+  // addToCart(course);
+  // };
 
-  const removeFromCart = (courseId: number) => {
-    setCart(cart.filter((item) => item.id !== courseId));
-  };
+  // const removeFromCart = (courseId: number) => {
+  //   setCart(cart.filter((item) => item.id !== courseId));
+  // };
 
-  const updateCartQuantity = (courseId: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(courseId);
-    } else {
-      setCart(
-        cart.map((item) =>
-          item.id === courseId ? { ...item, quantity } : item
-        )
-      );
-    }
-  };
+  // const updateCartQuantity = (courseId: number, quantity: number) => {
+  //   if (quantity <= 0) {
+  //     removeFromCart(courseId);
+  //   } else {
+  //     setCart(
+  //       cart.map((item) =>
+  //         item.id === courseId ? { ...item, quantity } : item
+  //       )
+  //     );
+  //   }
+  // };
 
-  const getCartTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
-  };
+  // const getCartTotal = () => {
+  //   return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  // };
 
-  const getCartItemCount = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
+  // const getCartItemCount = () => {
+  //   return cart.reduce((total, item) => total + item.quantity, 0);
+  // };
 
   const toggleLike = (courseId: number) => {
     const newLikedCourses = new Set(likedCourses);
@@ -112,7 +186,7 @@ const Homepage = () => {
   };
 
   // Filter functions
-  const getAllCourses = () => {
+  const getAllCourse = () => {
     return [
       ...data.popularCourses,
       ...data.clinicalCourses,
@@ -122,7 +196,7 @@ const Homepage = () => {
   };
 
   const getFilteredCourses = () => {
-    let courses = getAllCourses();
+    let courses = getAllCourse();
 
     // Filter by category
     if (activeFilter !== "all") {
@@ -177,8 +251,16 @@ const Homepage = () => {
     setPriceRange({ min: 0, max: 1000000 });
   };
 
-  const CourseCard = ({ course }: { course: Course }) => {
-    const isInCart = cart.some((item) => item.id === course.id);
+  const CourseCard: React.FC<Props> = ({
+    course,
+    cartItems,
+    handleAddToCart,
+    updateQuantity,
+  }) => {
+    const itemInCart = cartItems.some((item) => item.id === course.id);
+    const getCartQuantity = cartItems.find((item) => {
+      return item.id === course.id;
+    });
     const isLiked = likedCourses.has(course.id);
 
     return (
@@ -258,16 +340,36 @@ const Homepage = () => {
           </div>
 
           <div className="flex gap-2">
-            <button
-              onClick={() => addToCart(course)}
-              className={`flex-1 px-4 py-2 rounded transition-colors ${
-                isInCart
-                  ? "bg-green-500 text-white hover:bg-green-600"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
-            >
-              {isInCart ? "✓ Added" : "🛒 Add to Cart"}
-            </button>
+            {itemInCart ? (
+              <div className="flex items-center border border-gray-300 rounded-lg">
+                <button
+                  onClick={() =>
+                    updateQuantity(course.id, getCartQuantity.quantity - 1)
+                  }
+                  className="p-2 hover:bg-gray-100 rounded-l-lg"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="px-4 py-2 border-x border-gray-300">
+                  {getCartQuantity.quantity}
+                </span>
+                <button
+                  onClick={() =>
+                    updateQuantity(course.id, getCartQuantity.quantity + 1)
+                  }
+                  className="p-2 hover:bg-gray-100 rounded-r-lg"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => handleAddToCart(course.id)}
+                className=" w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+              >
+                🛒 Add to Cart
+              </button>
+            )}
             <Link href={`/course/${course.slug}`}>
               <button className="px-4 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50 transition-colors">
                 View
@@ -315,7 +417,8 @@ const Homepage = () => {
           No courses available
         </h3>
         <p className="text-gray-600 mb-6">
-          No courses match your current filters. Try adjusting your search criteria.
+          No courses match your current filters. Try adjusting your search
+          criteria.
         </p>
         <button
           onClick={clearFilters}
@@ -562,7 +665,13 @@ const Homepage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {filteredCourses.length > 0 ? (
                   filteredCourses.map((course) => (
-                    <CourseCard key={course.id} course={course} />
+                    <CourseCard
+                      key={course.id}
+                      course={course}
+                      cartItems={cartItems}
+                      handleAddToCart={handleAddToCart}
+                      updateQuantity={updateQuantity}
+                    />
                   ))
                 ) : (
                   <NoCourses />
@@ -593,7 +702,13 @@ const Homepage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {data.popularCourses.length > 0 ? (
                     data.popularCourses.map((course) => (
-                      <CourseCard key={course.id} course={course} />
+                      <CourseCard
+                        key={course.id}
+                        course={course}
+                        cartItems={cartItems}
+                        handleAddToCart={handleAddToCart}
+                        updateQuantity={updateQuantity}
+                      />
                     ))
                   ) : (
                     <NoCourses />
@@ -620,7 +735,13 @@ const Homepage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {data.clinicalCourses.length > 0 ? (
                     data.clinicalCourses.map((course) => (
-                      <CourseCard key={course.id} course={course} />
+                      <CourseCard
+                        key={course.id}
+                        course={course}
+                        cartItems={cartItems}
+                        handleAddToCart={handleAddToCart}
+                        updateQuantity={updateQuantity}
+                      />
                     ))
                   ) : (
                     <NoCourses />
@@ -647,7 +768,13 @@ const Homepage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {data.managementCourses.length > 0 ? (
                     data.managementCourses.map((course) => (
-                      <CourseCard key={course.id} course={course} />
+                      <CourseCard
+                        key={course.id}
+                        course={course}
+                        cartItems={cartItems}
+                        handleAddToCart={handleAddToCart}
+                        updateQuantity={updateQuantity}
+                      />
                     ))
                   ) : (
                     <NoCourses />
@@ -674,7 +801,13 @@ const Homepage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {data.certificationCourses.length > 0 ? (
                     data.certificationCourses.map((course) => (
-                      <CourseCard key={course.id} course={course} />
+                      <CourseCard
+                        key={course.id}
+                        course={course}
+                        cartItems={cartItems}
+                        handleAddToCart={handleAddToCart}
+                        updateQuantity={updateQuantity}
+                      />
                     ))
                   ) : (
                     <NoCourses />
@@ -754,4 +887,4 @@ const Homepage = () => {
   );
 };
 
-export default Homepage
+export default Homepage;

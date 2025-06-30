@@ -10,7 +10,6 @@ import {
   BookOpen,
   LogOut,
   Settings,
-  GraduationCap,
   Search,
   Heart,
   ShoppingCart,
@@ -19,6 +18,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { getCartItems } from "@/utils/cartApi";
+import { useQuery } from "@tanstack/react-query";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -34,20 +35,12 @@ export function Navbar() {
   const [programsOpen, setProgramsOpen] = useState(false);
 
   // Mock cart data - replace with your actual cart state management
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      title: "Advanced Clinical Skills",
-      price: 299,
-      image: "/course1.jpg",
-    },
-    {
-      id: 2,
-      title: "Healthcare Management",
-      price: 199,
-      image: "/course2.jpg",
-    },
-  ]);
+  const { data: cartItems = [] } = useQuery({
+    queryKey: ["cartItems", user?.id],
+    queryFn: () => getCartItems(user.id),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60, // 1 min cache
+  });
 
   const handleLogout = () => {
     logout();
@@ -64,7 +57,7 @@ export function Navbar() {
     }
   };
 
-  const removeFromCart = (courseId) => {
+  const removeFromCart = (courseId: number) => {
     setCartItems(cartItems.filter((item) => item.id !== courseId));
   };
 
@@ -159,7 +152,7 @@ export function Navbar() {
 
             {user ? (
               <div className="flex items-center space-x-4">
-               {/* Search Icon */}
+                {/* Search Icon */}
                 <button
                   onClick={() => setIsSearchOpen(!isSearchOpen)}
                   className="text-gray-700 hover:text-blue-600 p-2"
@@ -257,49 +250,47 @@ export function Navbar() {
                   </Link>
                 </div>
                 <div className="relative">
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-blue-600"
-                >
-                  <User className="h-5 w-5" />
-                  <span>{user.firstName}</span>
-                </button>
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-2 text-gray-700 hover:text-blue-600"
+                  >
+                    <User className="h-5 w-5" />
+                    <span>{user.firstName}</span>
+                  </button>
 
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200">
-                    <Link
-                      href="/dashboard"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <BookOpen className="inline h-4 w-4 mr-2" />
-                      Dashboard
-                    </Link>
-                    {user.role === "ADMIN" && (
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200">
                       <Link
-                        href="/admin/courses"
+                        href="/dashboard"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
-                        <Settings className="inline h-4 w-4 mr-2" />
-                        Admin
+                        <BookOpen className="inline h-4 w-4 mr-2" />
+                        Dashboard
                       </Link>
-                    )}
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
-                    >
-                      <LogOut className="inline h-4 w-4 mr-2" />
-                      Logout
-                    </button>
-                  </div>
-                )}
+                      {user.role === "ADMIN" && (
+                        <Link
+                          href="/admin/courses"
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <Settings className="inline h-4 w-4 mr-2" />
+                          Admin
+                        </Link>
+                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      >
+                        <LogOut className="inline h-4 w-4 mr-2" />
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              </div>
-
             ) : (
               <div className="flex items-center space-x-4">
-
                 {/* Login Button */}
                 <Link
                   href="/login"

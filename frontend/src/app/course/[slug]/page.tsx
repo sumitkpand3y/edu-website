@@ -2,31 +2,74 @@
 import { useEffect, useState } from "react";
 import { useParams } from 'next/navigation'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { ParamValue } from "next/dist/server/request/params";
+import { getCourseBySlug } from "@/hooks/courseApi";
 
 const CourseDetailPage = () => {
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(0)
   const { slug } = useParams()
-   const [courseData, setCourseData] = useState(null)
+   type CourseData = {
+     id: number;
+     title: string;
+     subtitle: string;
+     duration: string;
+     level: string;
+     rating: number;
+     price: number;
+     batchStartDate: string;
+     nextReviewDate: string;
+     outcomes: string[];
+     about: string;
+     curriculum: { module: string; topics: string[] }[];
+     targetAudience: string;
+     knowledgePartner: string;
+     faculty: {
+       name: string;
+       title: string;
+       department: string;
+       bio: string;
+     }[];
+     faqs: {
+       question: string;
+       answer: string;
+     }[];
+     relatedCourses: {
+       title: string;
+       description: string;
+       level: string;
+       duration: string;
+       rating: number;
+       price: number;
+     }[];
+   };
+   const [courseData, setCourseData] = useState<CourseData | null>(null)
 
   const handleToggle = (index: number) => {
     setActiveIndex(prev => (prev === index ? null : index))
   }
   useEffect(() => {
-    const fetchCourse = async () => {
-      try {
-        const res = await fetch('/data/courseSlug.json') // hitting from public folder
-        const data = await res.json()
-        const course = data.find((course: { slug: ParamValue; }) => course.slug === slug)
-        setCourseData(course)
-      } catch (err) {
-        console.error("Failed to load course data", err)
-      }
-    }
+  const fetchCourse = async () => {
+    if (!slug) return;
 
-    fetchCourse()
-  }, [slug])
+    try {
+      const res = await getCourseBySlug(slug as string);
+      // const course = res?.course?.find(
+      //   (course: { slug: string }) => course.slug === slug
+      // );
+
+      if (res.course) {
+        setCourseData(res.course);
+      } else {
+        console.warn("Course not found for slug:", slug);
+      }
+    } catch (err) {
+      console.error("Failed to load course data", err);
+    }
+  };
+
+  fetchCourse();
+}, [slug]);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -310,7 +353,7 @@ if (!courseData) return <p>Loading...</p>
                     Curriculum:
                   </h2>
                   <div className="space-y-4">
-                    {courseData.curriculum.map((module, index) => (
+                    {courseData?.curriculum?.map((module, index) => (
                       <div key={index}>
                         <button
                           onClick={() => handleToggle(index)}
@@ -961,54 +1004,6 @@ if (!courseData) return <p>Loading...</p>
           </div>
         </section>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <h3 className="text-lg font-bold mb-4">Aster Health Academy</h3>
-              <p className="text-gray-300 text-sm">
-                Advancing healthcare education through innovative programs and
-                partnerships with leading institutions.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-4">Quick Links</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Courses
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Faculty
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-gray-300 hover:text-white">
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-4">Contact Info</h3>
-              <div className="space-y-2 text-sm text-gray-300">
-                <p>Email: info@asterhealthacademy.com</p>
-                <p>Phone: +91 80 4444 2222</p>
-                <p>Address: Bangalore, India</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

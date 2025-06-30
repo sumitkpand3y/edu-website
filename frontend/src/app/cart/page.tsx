@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
 import {
   ShoppingCart,
@@ -16,99 +15,88 @@ import {
   BookOpen,
   ArrowLeft,
   Trash2,
-  Tag,
   CreditCard,
   Shield,
   CheckCircle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  getCartItems,
+  updateCartQuantity,
+  removeFromCart,
+} from "@/utils/cartApi";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CartPage() {
   const { user } = useAuth();
   const router = useRouter();
-  
-  // Mock cart data - replace with your actual cart state management
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      title: "Advanced Clinical Skills for Healthcare Professionals",
-      instructor: "Dr. Sarah Johnson",
-      price: 299,
-      originalPrice: 399,
-      image: "/api/placeholder/300/200",
-      rating: 4.8,
-      students: 2547,
-      duration: "12 hours",
-      lessons: 45,
-      level: "Advanced",
-      category: "Clinical",
-      description: "Master advanced clinical techniques and procedures used in modern healthcare settings.",
-      quantity: 1,
-      isWishlisted: true,
-    },
-    {
-      id: 2,
-      title: "Healthcare Management and Leadership",
-      instructor: "Prof. Michael Chen",
-      price: 199,
-      originalPrice: 249,
-      image: "/api/placeholder/300/200",
-      rating: 4.6,
-      students: 1823,
-      duration: "8 hours",
-      lessons: 32,
-      level: "Intermediate",
-      category: "Management",
-      description: "Develop leadership skills and management strategies for healthcare organizations.",
-      quantity: 1,
-      isWishlisted: false,
-    },
-    {
-      id: 3,
-      title: "Medical Ethics and Patient Care",
-      instructor: "Dr. Emily Rodriguez",
-      price: 149,
-      originalPrice: 199,
-      image: "/api/placeholder/300/200",
-      rating: 4.9,
-      students: 3421,
-      duration: "6 hours",
-      lessons: 24,
-      level: "Beginner",
-      category: "Ethics",
-      description: "Understanding ethical principles and best practices in patient care and medical decision-making.",
-      quantity: 1,
-      isWishlisted: true,
-    },
-  ]);
-
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Mock cart data - replace with your actual cart state management
+  const {
+    data: cartItems = [],
+    refetch,
+    isPending: loading,
+  } = useQuery({
+    queryKey: ["cartItems", user?.id],
+    queryFn: () => getCartItems(user.id),
+    enabled: !!user?.id,
+  });
+
   // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const originalTotal = cartItems.reduce((sum, item) => sum + item.originalPrice * item.quantity, 0);
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const originalTotal = cartItems.reduce(
+    (sum, item) => sum + item.originalPrice * item.quantity,
+    0
+  );
   const totalSavings = originalTotal - subtotal;
-  const promoDiscount = appliedPromo ? subtotal * 0.1 : 0; // 10% discount example
+  const promoDiscount = appliedPromo ? subtotal * 0.1 : 0;
   const finalTotal = subtotal - promoDiscount;
 
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
+  // const fetchCart = useCallback(async () => {
+  //   if (!user?.id) return;
+  //   try {
+  //     setLoading(true);
+  //     const items = await getCartItems(user.id);
+  //     setCartItems(items);
+  //   } catch (err) {
+  //     console.error("Failed to load cart:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [user?.id]);
+
+  // useEffect(() => {
+  //   fetchCart();
+  // }, [fetchCart]);
+
+  // ✅ Update quantity
+  const updateQuantity = async (courseId: string, quantity: number) => {
+    try {
+      await updateCartQuantity({ userId: user.id, courseId, quantity });
+      refetch(); // refresh data from server
+    } catch (err) {
+      console.error("Failed to update quantity:", err);
+    }
   };
 
-  const removeFromCart = (id) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+  const removeFromCarts = async (courseId: string) => {
+    try {
+      await removeFromCart({ userId: user.id, courseId });
+      refetch(); // refresh data from server
+    } catch (err) {
+      console.error("Failed to remove item:", err);
+    }
   };
 
-  const toggleWishlist = (id) => {
-    setCartItems(items =>
-      items.map(item =>
+  const toggleWishlist = (id: string) => {
+    setCartItems((items) =>
+      items.map((item) =>
         item.id === id ? { ...item, isWishlisted: !item.isWishlisted } : item
       )
     );
@@ -141,7 +129,7 @@ export default function CartPage() {
   };
 
   const handleContinueShopping = () => {
-    router.push("/courses");
+    router.push("/");
   };
 
   if (cartItems.length === 0) {
@@ -150,7 +138,9 @@ export default function CartPage() {
         <div className="max-w-4xl mx-auto px-4">
           <div className="text-center py-16">
             <ShoppingCart className="mx-auto h-24 w-24 text-gray-300 mb-6" />
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Your cart is empty</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Your cart is empty
+            </h2>
             <p className="text-gray-600 mb-8">
               Looks like you haven't added any courses to your cart yet.
             </p>
@@ -179,8 +169,9 @@ export default function CartPage() {
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back
             </button>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Shopping Cart ({cartItems.length} {cartItems.length === 1 ? 'course' : 'courses'})
+            <h1 className="text-xl font-bold text-gray-900">
+              Shopping Cart ({cartItems.length}{" "}
+              {cartItems.length === 1 ? "course" : "courses"})
             </h1>
           </div>
           <button
@@ -195,7 +186,10 @@ export default function CartPage() {
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-6">
             {cartItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div
+                key={item.id}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+              >
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Course Image */}
                   <div className="flex-shrink-0">
@@ -228,11 +222,15 @@ export default function CartPage() {
                         <h3 className="text-xl font-semibold text-gray-900 mb-2">
                           {item.title}
                         </h3>
-                        <p className="text-gray-600 mb-2">by {item.instructor}</p>
-                        <p className="text-gray-600 text-sm mb-3">{item.description}</p>
+                        <p className="text-gray-600 mb-2">
+                          by {item.instructor}
+                        </p>
+                        <p className="text-gray-600 text-sm mb-3">
+                          {item.description}
+                        </p>
                       </div>
                       <button
-                        onClick={() => removeFromCart(item.id)}
+                        onClick={() => removeFromCarts(item.id)}
                         className="text-gray-400 hover:text-red-500 p-2"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -247,7 +245,7 @@ export default function CartPage() {
                       </div>
                       <div className="flex items-center">
                         <Users className="w-4 h-4 mr-1" />
-                        <span>{item.students.toLocaleString()} students</span>
+                        <span>{item?.students?.toLocaleString()} students</span>
                       </div>
                       <div className="flex items-center">
                         <Clock className="w-4 h-4 mr-1" />
@@ -267,7 +265,9 @@ export default function CartPage() {
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center border border-gray-300 rounded-lg">
                           <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            onClick={() =>
+                              updateQuantity(item.id, item.quantity - 1)
+                            }
                             className="p-2 hover:bg-gray-100 rounded-l-lg"
                             disabled={item.quantity <= 1}
                           >
@@ -277,7 +277,9 @@ export default function CartPage() {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            onClick={() =>
+                              updateQuantity(item.id, item.quantity + 1)
+                            }
                             className="p-2 hover:bg-gray-100 rounded-r-lg"
                           >
                             <Plus className="w-4 h-4" />
@@ -287,17 +289,17 @@ export default function CartPage() {
                       <div className="text-right">
                         <div className="flex items-center space-x-2">
                           <span className="text-2xl font-bold text-gray-900">
-                            ${item.price}
+                            ₹{item.price}
                           </span>
                           {item.originalPrice > item.price && (
                             <span className="text-lg text-gray-500 line-through">
-                              ${item.originalPrice}
+                              ₹{item.originalPrice}
                             </span>
                           )}
                         </div>
                         {item.originalPrice > item.price && (
                           <span className="text-green-600 text-sm font-medium">
-                            Save ${item.originalPrice - item.price}
+                            Save ₹{item.originalPrice - item.price}
                           </span>
                         )}
                       </div>
@@ -311,8 +313,10 @@ export default function CartPage() {
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Order Summary</h2>
-              
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                Order Summary
+              </h2>
+
               {/* Promo Code */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -355,25 +359,25 @@ export default function CartPage() {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">${subtotal}</span>
+                  <span className="font-medium">₹{subtotal}</span>
                 </div>
                 {totalSavings > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Course Savings</span>
-                    <span>-${totalSavings}</span>
+                    <span>-₹{totalSavings}</span>
                   </div>
                 )}
                 {promoDiscount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Promo Discount</span>
-                    <span>-${promoDiscount.toFixed(2)}</span>
+                    <span>-₹{promoDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold">Total</span>
                     <span className="text-2xl font-bold text-blue-600">
-                      ${finalTotal.toFixed(2)}
+                      ₹{finalTotal.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -385,7 +389,7 @@ export default function CartPage() {
                 className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium mb-4"
               >
                 <CreditCard className="inline w-5 h-5 mr-2" />
-                {user ? 'Proceed to Checkout' : 'Login to Purchase'}
+                {user ? "Proceed to Checkout" : "Login to Purchase"}
               </button>
 
               {/* Security Badge */}
@@ -398,7 +402,9 @@ export default function CartPage() {
               <div className="mt-4 p-3 bg-green-50 rounded-lg">
                 <div className="flex items-center text-sm text-green-800">
                   <CheckCircle className="w-4 h-4 mr-2" />
-                  <span className="font-medium">30-day money-back guarantee</span>
+                  <span className="font-medium">
+                    30-day money-back guarantee
+                  </span>
                 </div>
               </div>
             </div>
