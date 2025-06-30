@@ -24,14 +24,15 @@ model User {
   orders       Order[]
   certificates Certificate[]
   blogPosts    BlogPost[]
+  cartItems    CartItem[]    @relation("UserCartItems")
 
   @@map("users")
 }
 
 model Course {
-  id               String    @id @default(cuid())
+  id               String       @id @default(cuid())
   title            String
-  slug             String    @unique
+  slug             String       @unique
   subtitle         String?
   description      String?
   longDescription  String?
@@ -42,24 +43,26 @@ model Course {
   originalPrice    Float
   duration         Int
   level            Level        @default(BEGINNER)
-  status           CourseStatus  @default(DRAFT)
+  status           CourseStatus @default(DRAFT)
   category         String
   provider         String?
-  isPublished      Boolean   @default(false)
+  isPublished      Boolean      @default(false)
   batchStartDate   DateTime?
   nextReviewDate   DateTime?
-  rating           Float     @default(0)
-  reviews          Int       @default(0)
-  enrolledStudents Int       @default(0)
-  featured         Boolean   @default(false)
+  rating           Float        @default(0)
+  reviews          Int          @default(0)
+  enrolledStudents Int          @default(0)
+  featured         Boolean      @default(false)
   about            String?
   outcomes         String[]
   targetAudience   String?
   knowledgePartner String?
   prerequisites    String?
-  passingPercent   Int       @default(70)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  passingPercent   Int          @default(70)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  curriculum       Json?
 
   // Relations
   tags         Tag[]
@@ -71,8 +74,9 @@ model Course {
   orderItems   OrderItem[]
   certificates Certificate[]
 
-  relatedCourses      Course[] @relation("CourseToRelatedCourses")
-  relatedToThisCourse Course[] @relation("CourseToRelatedCourses")
+  relatedCourses      Course[]   @relation("CourseToRelatedCourses")
+  relatedToThisCourse Course[]   @relation("CourseToRelatedCourses")
+  cartItems           CartItem[] @relation("CourseCartItems") //
 
   @@map("courses")
 }
@@ -227,52 +231,51 @@ model Certificate {
 }
 
 model BlogPost {
-  id         Int      @id @default(autoincrement())
-  title      String
-  slug       String   @unique
-  excerpt    String
-  content    String
-  category   String
-  isPublished Boolean  @default(false)
-  image      String
-  date       DateTime
-  readTime   String
-  status           BlogStatus  @default(DRAFT)
+  id          Int        @id @default(autoincrement())
+  title       String
+  slug        String     @unique
+  excerpt     String
+  content     String
+  category    String
+  isPublished Boolean    @default(false)
+  image       String
+  date        DateTime
+  readTime    String
+  status      BlogStatus @default(DRAFT)
 
-  tags             BlogTag[]   @relation("BlogPostTags")
-  authorId    String
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  tags      BlogTag[] @relation("BlogPostTags")
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model BlogTag {
-  id        Int         @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   name      String
-  blogPosts BlogPost[]  @relation("BlogPostTags")
+  blogPosts BlogPost[] @relation("BlogPostTags")
 }
 
-
 model Partner {
-  id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(100)
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(100)
   type        PartnerType
-  logo        String   @db.VarChar(500)
-  description String   @db.Text
-  established String   @db.VarChar(4)
-  location    String   @db.VarChar(200)
-  website     String   @db.VarChar(300)
-  email       String   @db.VarChar(100)
-  phone       String   @db.VarChar(20)
+  logo        String      @db.VarChar(500)
+  description String      @db.Text
+  established String      @db.VarChar(4)
+  location    String      @db.VarChar(200)
+  website     String      @db.VarChar(300)
+  email       String      @db.VarChar(100)
+  phone       String      @db.VarChar(20)
   specialties String[] // Array of strings for PostgreSQL
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  @@map("partners")
   @@index([type])
   @@index([name])
   @@index([isActive])
+  @@map("partners")
 }
 
 enum PartnerType {
@@ -282,22 +285,22 @@ enum PartnerType {
 }
 
 model PartnerInquiry {
-  id                      Int      @id @default(autoincrement())
-  hospitalName            String   @db.VarChar(200)
-  contactName             String   @db.VarChar(100)
-  email                   String   @db.VarChar(100)
-  phone                   String   @db.VarChar(20)
-  designation             String   @db.VarChar(100)
-  hospitalBedCount        String   @db.VarChar(20)
-  purposeForCollaboration String   @db.VarChar(100)
-  message                 String?  @db.Text
+  id                      Int           @id @default(autoincrement())
+  hospitalName            String        @db.VarChar(200)
+  contactName             String        @db.VarChar(100)
+  email                   String        @db.VarChar(100)
+  phone                   String        @db.VarChar(20)
+  designation             String        @db.VarChar(100)
+  hospitalBedCount        String        @db.VarChar(20)
+  purposeForCollaboration String        @db.VarChar(100)
+  message                 String?       @db.Text
   status                  InquiryStatus @default(PENDING)
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
 
-  @@map("partner_inquiries")
   @@index([status])
   @@index([createdAt])
+  @@map("partner_inquiries")
 }
 
 enum InquiryStatus {
@@ -307,7 +310,6 @@ enum InquiryStatus {
   APPROVED
   REJECTED
 }
-
 
 // Enums
 enum Role {
@@ -321,6 +323,7 @@ enum Level {
   INTERMEDIATE
   ADVANCED
 }
+
 enum CourseStatus {
   DRAFT
   PUBLISHED
@@ -350,4 +353,16 @@ enum OrderStatus {
   COMPLETED
   FAILED
   CANCELLED
+}
+
+model CartItem {
+  id       String @id @default(cuid())
+  quantity Int    @default(1)
+  userId   String
+  courseId String
+
+  user   User   @relation("UserCartItems", fields: [userId], references: [id])
+  course Course @relation("CourseCartItems", fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId]) // prevent duplicates
 }

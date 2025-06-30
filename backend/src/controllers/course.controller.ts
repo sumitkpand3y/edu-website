@@ -5,7 +5,7 @@ import prisma from "../models/prisma";
 export class CourseController {
   static getAllCourses = async (req: Request, res: Response) => {
     try {
-      const { category, level, search, page = 1, limit = 10 } = req.query;
+      const { category, level, search, page = 1, limit = 100 } = req.query;
       const skip = (Number(page) - 1) * Number(limit);
 
       const whereClause: any = {
@@ -54,6 +54,7 @@ export class CourseController {
             targetAudience: true,
             knowledgePartner: true,
             prerequisites: true,
+            curriculum: true,
             about: true,
             outcomes: true,
             _count: {
@@ -186,6 +187,7 @@ export class CourseController {
         faqs,
         faculty,
         tags,
+        curriculum,
         relatedCourseIds,
       } = req.body;
 
@@ -214,6 +216,7 @@ export class CourseController {
           provider,
           status: status as any, // Cast to any if you are sure it's valid, or use CourseStatus enum if imported
           thumbnail,
+          curriculum: curriculum || [], // Ensure curriculum is an array
           image,
           batchStartDate: batchStartDate ? new Date(batchStartDate) : undefined,
           nextReviewDate: nextReviewDate ? new Date(nextReviewDate) : undefined,
@@ -289,6 +292,7 @@ export class CourseController {
         isPublished,
         faqs,
         faculty,
+        curriculum,
         tags,
         relatedCourseIds,
       } = req.body;
@@ -310,6 +314,7 @@ export class CourseController {
           enrolledStudents,
           level,
           category,
+          curriculum: curriculum || [], // Ensure curriculum is an array
           provider,
           thumbnail,
           image,

@@ -8,6 +8,7 @@ import { errorHandler } from './middlewares/error.middleware';
 import authRoutes from './routes/auth.routes';
 import courseRoutes from './routes/course.routes';
 import blogRoutes from './routes/blog.routes';
+import CartRoutes from './routes/cart.routes';
 import enrollmentRoutes from './routes/enrollment.routes';
 import paymentRoutes from './routes/payment.routes';
 import listEndpoints from 'express-list-endpoints';
@@ -24,10 +25,10 @@ app.use(cors({
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 60 * 1000, // 1 minute
   max: 100 // limit each IP to 100 requests per windowMs
 });
-app.use(limiter);
+app.use(limiter); 
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -36,6 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/cart', CartRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/payments', paymentRoutes);

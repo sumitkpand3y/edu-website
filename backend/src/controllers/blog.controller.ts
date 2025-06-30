@@ -102,7 +102,6 @@ export class BlogController {
         status,
         tags,
       } = req.body;
-      console.log("req", req);
       
       const authorId = req?.user?.userId;
       if (!authorId) {
