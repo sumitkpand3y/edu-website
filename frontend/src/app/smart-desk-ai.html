@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AHA AI Challenge - AI Patch/Update Advisor MVP</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        overflow-x: hidden;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .slide {
+        min-height: 100vh;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 40px;
+        animation: slideIn 0.5s ease-in-out;
+      }
+
+      .slide.active {
+        display: flex;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .slide h1 {
+        font-size: 3.5rem;
+        margin-bottom: 30px;
+        background: linear-gradient(45deg, #00d4ff, #ff6b6b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+      }
+
+      .slide h2 {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        color: #00d4ff;
+        text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+      }
+
+      .slide h3 {
+        font-size: 2rem;
+        margin-bottom: 15px;
+        color: #ff6b6b;
+      }
+
+      .slide p {
+        font-size: 1.3rem;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        max-width: 800px;
+      }
+
+      .hero-section {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 60px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 30px;
+        margin: 40px 0;
+      }
+
+      .stat-card {
+        background: rgba(0, 212, 255, 0.1);
+        padding: 30px;
+        border-radius: 15px;
+        border: 2px solid #00d4ff;
+        backdrop-filter: blur(5px);
+        transition: transform 0.3s ease;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 212, 255, 0.3);
+      }
+
+      .stat-number {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #00d4ff;
+        display: block;
+      }
+
+      .stat-label {
+        font-size: 1.1rem;
+        color: #ffffff;
+        margin-top: 10px;
+      }
+
+      .demo-container {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 40px;
+        border-radius: 20px;
+        border: 1px solid #ff6b6b;
+        margin: 30px 0;
+        max-width: 900px;
+      }
+
+      .demo-interface {
+        background: #1a1a1a;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        font-family: "Courier New", monospace;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin: 30px 0;
+      }
+
+      .dashboard-card {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 25px;
+        border-radius: 15px;
+        border: 1px solid #00d4ff;
+        text-align: left;
+        transition: transform 0.3s ease;
+      }
+
+      .dashboard-card:hover {
+        transform: translateY(-5px);
+        border-color: #ff6b6b;
+      }
+
+      .dashboard-card h4 {
+        color: #00d4ff;
+        margin-bottom: 15px;
+        font-size: 1.4rem;
+      }
+
+      .patch-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 10px 0;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+      }
+
+      .status-critical {
+        background: rgba(255, 107, 107, 0.2);
+        border-left: 4px solid #ff6b6b;
+      }
+
+      .status-warning {
+        background: rgba(255, 193, 7, 0.2);
+        border-left: 4px solid #ffc107;
+      }
+
+      .status-good {
+        background: rgba(40, 167, 69, 0.2);
+        border-left: 4px solid #28a745;
+      }
+
+      .ai-tools-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 30px 0;
+      }
+
+      .tool-card {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 25px;
+        border-radius: 15px;
+        border: 1px solid #ff6b6b;
+        text-align: left;
+        transition: transform 0.3s ease;
+      }
+
+      .tool-card:hover {
+        transform: translateY(-5px);
+        border-color: #00d4ff;
+      }
+
+      .tool-icon {
+        font-size: 2rem;
+        margin-bottom: 15px;
+      }
+
+      .navigation {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+        z-index: 1000;
+      }
+
+      .nav-btn {
+        background: rgba(0, 212, 255, 0.2);
+        border: 2px solid #00d4ff;
+        color: #00d4ff;
+        padding: 10px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+      }
+
+      .nav-btn:hover {
+        background: rgba(0, 212, 255, 0.4);
+        transform: translateY(-2px);
+      }
+
+      .slide-counter {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px 20px;
+        border-radius: 20px;
+        border: 1px solid #00d4ff;
+        z-index: 1000;
+      }
+
+      .cta-button {
+        background: linear-gradient(45deg, #00d4ff, #ff6b6b);
+        border: none;
+        color: #000;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 20px 10px;
+      }
+
+      .cta-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+      }
+
+      .logo {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #00d4ff;
+        z-index: 1000;
+      }
+
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #00d4ff, #ff6b6b);
+        transition: width 0.3s ease;
+        z-index: 1001;
+      }
+
+      .highlight {
+        background: linear-gradient(45deg, #00d4ff, #ff6b6b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: bold;
+      }
+
+      .glow {
+        text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+      }
+
+      .impact-visual {
+        display: flex;
+        justify-content: space-around;
+        margin: 40px 0;
+      }
+
+      .before-after {
+        text-align: center;
+        flex: 1;
+        margin: 0 20px;
+      }
+
+      .before-after h4 {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        color: #00d4ff;
+      }
+
+      .metric-bar {
+        height: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+
+      .metric-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff4444, #00d4ff);
+        transition: width 2s ease;
+      }
+
+      .timeline {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 40px 0;
+        position: relative;
+      }
+
+      .timeline::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #00d4ff, #ff6b6b);
+      }
+
+      .timeline-item {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 20px;
+        border-radius: 15px;
+        border: 2px solid #00d4ff;
+        position: relative;
+        z-index: 1;
+        min-width: 150px;
+      }
+
+      .roi-calculator {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 30px;
+        border-radius: 15px;
+        border: 1px solid #ff6b6b;
+        margin: 20px 0;
+        max-width: 600px;
+      }
+
+      .roi-row {
+        display: flex;
+        justify-content: space-between;
+        margin: 15px 0;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+      }
+
+      .excel-interface {
+        background: #2b2b2b;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        border: 1px solid #00d4ff;
+      }
+
+      .excel-row {
+        display: flex;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 5px 0;
+        border-radius: 5px;
+      }
+
+      .excel-cell {
+        flex: 1;
+        padding: 10px;
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 0.9rem;
+      }
+
+      .excel-header {
+        background: rgba(0, 212, 255, 0.3);
+        font-weight: bold;
+      }
+
+      ul {
+        text-align: left;
+        margin: 20px 0;
+      }
+
+      li {
+        margin: 10px 0;
+        list-style: none;
+        padding-left: 20px;
+        position: relative;
+      }
+
+      li::before {
+        content: "→";
+        position: absolute;
+        left: 0;
+        color: #00d4ff;
+        font-weight: bold;
+      }
+
+      .vulnerability-alert {
+        background: rgba(255, 107, 107, 0.2);
+        border: 2px solid #ff6b6b;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+
+      .success-alert {
+        background: rgba(40, 167, 69, 0.2);
+        border: 2px solid #28a745;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+
+      @media (max-width: 768px) {
+        .slide h1 {
+          font-size: 2.5rem;
+        }
+        .slide h2 {
+          font-size: 2rem;
+        }
+        .slide p {
+          font-size: 1.1rem;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+        .timeline {
+          flex-direction: column;
+          gap: 20px;
+        }
+        .timeline::before {
+          display: none;
+        }
+        .impact-visual {
+          flex-direction: column;
+        }
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .typing-animation {
+        border-right: 2px solid #00d4ff;
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          border-color: #00d4ff;
+        }
+        51%,
+        100% {
+          border-color: transparent;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="logo">🛡️ SmartDesk AI</div>
+    <div class="slide-counter">
+      <span id="currentSlide">1</span> / <span id="totalSlides">12</span>
+    </div>
+
+    <div class="container">
+      <!-- Slide 1: SmartDesk AI – OS Health for Everyone -->
+      <div class="slide active">
+        <div class="hero-section">
+          <h1>🛡️ SmartDesk AI – OS Health for Everyone</h1>
+          <h2>Proactive OS Health Monitoring & Security Intelligence</h2>
+          <p>
+            Real-time OS health monitoring across all employee devices with
+            AI-powered insights
+          </p>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-number">100%</span>
+              <span class="stat-label">Device Visibility</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number">24/7</span>
+              <span class="stat-label">Health Monitoring</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number">Zero</span>
+              <span class="stat-label">Shadow IT Blind Spots</span>
+            </div>
+          </div>
+          <p>
+            <strong>Solution:</strong> AI Agent + Dashboard + Smart Alerts |
+            <strong>Team:</strong> IT Security & Operations
+          </p>
+        </div>
+      </div>
+
+      <!-- Slide 2: The Problem -->
+      <div class="slide">
+        <h2>🚨 The Problem</h2>
+        <div class="demo-container">
+          <h3>Current OS Management Challenges</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-number">60%</span>
+              <span class="stat-label">Devices with Outdated OS</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number">45</span>
+              <span class="stat-label">Days Update Delay Average</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number">25%</span>
+              <span class="stat-label">Shadow IT Devices</span>
+            </div>
+          </div>
+          <div class="vulnerability-alert">
+            <h4>🔒 Critical Issues:</h4>
+            <ul>
+              <li>OS fragmentation across Windows, Mac, and Linux systems</li>
+              <li>Delayed security updates creating vulnerability windows</li>
+              <li>Shadow IT devices operating without IT oversight</li>
+              <li>No real-time visibility into system health status</li>
+              <li>Manual tracking leads to missed critical patches</li>
+              <li>Compliance gaps due to incomplete device inventory</li>
+              <li>Security incidents from unpatched endpoints</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: The Vision -->
+      <div class="slide">
+        <h2>🎯 The Vision</h2>
+        <div class="demo-container">
+          <h3>Proactive OS Health for Modern Workplace</h3>
+          <div class="ai-tools-grid">
+            <div class="tool-card">
+              <div class="tool-icon">🔍</div>
+              <h4>Proactive Monitoring</h4>
+              <p>Continuous OS health checks before issues become critical</p>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">📊</div>
+              <h4>Real-time Data</h4>
+              <p>Live system metrics, patch status, and security posture</p>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">🎛️</div>
+              <h4>Centralized Dashboard</h4>
+              <p>Single pane of glass for all employee devices</p>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">🤖</div>
+              <h4>AI-Powered Insights</h4>
+              <p>Smart recommendations and predictive maintenance</p>
+            </div>
+          </div>
+          <div class="success-alert">
+            <p>
+              🎯 <strong>Vision:</strong> Transform reactive IT support into
+              proactive OS health management with complete visibility and
+              automated intelligence across all employee devices.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4: Solution Architecture -->
+      <div class="slide">
+        <h2>🏗️ Solution Architecture</h2>
+        <div class="demo-container">
+          <h3>Agent + API + AI + Dashboard Integration</h3>
+          <div class="ai-tools-grid">
+            <div class="tool-card">
+              <div class="tool-icon">🖥️</div>
+              <h4>Lightweight Agent</h4>
+              <p>Cross-platform agent for Windows, Mac, Linux monitoring</p>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">🔗</div>
+              <h4>REST API</h4>
+              <p>Secure data collection and real-time system communication</p>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">🧠</div>
+              <h4>AI Engine</h4>
+              <p>
+                ChatGPT integration for intelligent analysis and recommendations
+              </p>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">📊</div>
+              <h4>Web Dashboard</h4>
+              <p>Real-time visualization and management interface</p>
+            </div>
+          </div>
+          <h3 style="margin-top: 30px">Integration Points:</h3>
+          <ul>
+            <li>Slack notifications for critical OS health alerts</li>
+            <li>Email summaries for weekly system health reports</li>
+            <li>Microsoft Teams integration for IT team collaboration</li>
+            <li>JIRA ticket creation for automated remediation workflows</li>
+            <li>Active Directory sync for employee device mapping</li>
+            <li>Security tools integration (Antivirus, EDR, SIEM)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Slide 5: For Every Employee -->
+      <div class="slide">
+        <h2>👥 For Every Employee</h2>
+        <div class="demo-container">
+          <h3>Individual System Monitoring</h3>
+          <div class="excel-interface">
+            <div class="excel-row">
+              <div class="excel-cell excel-header">Employee</div>
+              <div class="excel-cell excel-header">Device</div>
+              <div class="excel-cell excel-header">OS Version</div>
+              <div class="excel-cell excel-header">Health Status</div>
+              <div class="excel-cell excel-header">Action Required</div>
+            </div>
+            <div class="excel-row">
+              <div class="excel-cell">John Smith</div>
+              <div class="excel-cell">MacBook Pro M2</div>
+              <div class="excel-cell">macOS 14.2</div>
+              <div class="excel-cell" style="color: #ff6b6b">🔴 Critical</div>
+              <div class="excel-cell">Security Update 14.3 pending</div>
+            </div>
+            <div class="excel-row">
+              <div class="excel-cell">Sarah Johnson</div>
+              <div class="excel-cell">ThinkPad X1</div>
+              <div class="excel-cell">Windows 11 22H2</div>
+              <div class="excel-cell" style="color: #ffc107">🟡 Warning</div>
+              <div class="excel-cell">Feature update available</div>
+            </div>
+            <div class="excel-row">
+              <div class="excel-cell">Mike Davis</div>
+              <div class="excel-cell">Ubuntu Laptop</div>
+              <div class="excel-cell">Ubuntu 22.04.3</div>
+              <div class="excel-cell" style="color: #28a745">🟢 Healthy</div>
+              <div class="excel-cell">All systems up to date</div>
+            </div>
+          </div>
+          <h3>Data Collection Points:</h3>
+          <ul>
+            <li>OS version, build number, and patch level</li>
+            <li>Installed software inventory and versions</li>
+            <li>System performance metrics (CPU, RAM, disk)</li>
+            <li>Security software status and last scan results</li>
+            <li>Network connectivity and VPN status</li>
+            <li>Hardware health indicators and temperatures</li>
+            <li>User login patterns and system uptime</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Slide 6: Dashboard Preview -->
+      <div class="slide">
+        <h2>📊 Dashboard Preview</h2>
+        <div class="demo-container">
+          <h3>Real-Time OS Health Overview</h3>
+          <div class="dashboard-grid">
+            <div class="dashboard-card">
+              <h4>🖥️ System Overview</h4>
+              <div class="patch-status status-good">
+                <span>Total Devices</span>
+                <span>247 monitored</span>
+              </div>
+              <div class="patch-status status-warning">
+                <span>Health Alerts</span>
+                <span>⚠️ 23 warnings</span>
+              </div>
+              <div class="patch-status status-critical">
+                <span>Critical Issues</span>
+                <span>🔴 5 urgent</span>
+              </div>
+            </div>
+
+            <div class="dashboard-card">
+              <h4>📈 OS Distribution</h4>
+              <div class="patch-status status-good">
+                <span>Windows</span>
+                <span>156 devices (63%)</span>
+              </div>
+              <div class="patch-status status-good">
+                <span>macOS</span>
+                <span>67 devices (27%)</span>
+              </div>
+              <div class="patch-status status-good">
+                <span>Linux</span>
+                <span>24 devices (10%)</span>
+              </div>
+            </div>
+
+            <div class="dashboard-card">
+              <h4>🛡️ Security Status</h4>
+              <div class="patch-status status-good">
+                <span>Updated Systems</span>
+                <span>219 devices (89%)</span>
+              </div>
+              <div class="patch-status status-warning">
+                <span>Pending Updates</span>
+                <span>23 devices (9%)</span>
+              </div>
+              <div class="patch-status status-critical">
+                <span>Critical Patches</span>
+                <span>5 devices (2%)</span>
+              </div>
+            </div>
+
+            <div class="dashboard-card">
+              <h4>👥 Employee Breakdown</h4>
+              <div class="patch-status status-good">
+                <span>Engineering</span>
+                <span>67 devices</span>
+              </div>
+              <div class="patch-status status-good">
+                <span>Sales</span>
+                <span>45 devices</span>
+              </div>
+              <div class="patch-status status-warning">
+                <span>Marketing</span>
+                <span>34 devices</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 7: AI-Powered Insights -->
+      <div class="slide">
+        <h2>🧠 AI-Powered Insights</h2>
+        <div class="demo-container">
+          <h3>GPT/AI Recommendations & Trend Analysis</h3>
+          <div class="demo-interface">
+            <div style="color: #00d4ff; margin-bottom: 15px">
+              🤖 AI Analysis Summary:
+            </div>
+            <div style="color: #ff6b6b; margin-bottom: 10px">
+              TREND DETECTED: 15% increase in macOS devices missing security
+              updates
+            </div>
+            <div style="color: #ffffff; margin-bottom: 10px">
+              Root Cause: Auto-update disabled on developer machines
+            </div>
+            <div style="color: #ffffff; margin-bottom: 10px">
+              Impact: Potential security vulnerabilities in Engineering team
+            </div>
+            <div style="color: #ffc107; margin-bottom: 10px">
+              Recommendation: Enable managed updates for critical security
+              patches
+            </div>
+            <div style="color: #28a745">
+              Action Plan: Deploy MDM policy to force security updates
+            </div>
+          </div>
+
+          <div class="ai-tools-grid">
+            <div class="tool-card">
+              <div class="tool-icon">📊</div>
+              <h4>Trend Analysis</h4>
+              <p>AI identifies patterns in OS health and update compliance</p>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">🎯</div>
+              <h4>Smart Recommendations</h4>
+              <p>Contextual fixes based on device type and user role</p>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">⚠️</div>
+              <h4>Risk Prediction</h4>
+              <p>Forecast potential security issues before they occur</p>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">🔄</div>
+              <h4>Auto-Remediation</h4>
+              <p>Suggest and execute approved fixes automatically</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 8: Compliance & Audit Reports -->
+      <div class="slide">
+        <h2>📋 Compliance & Audit Reports</h2>
+        <div class="demo-container">
+          <h3>One-Click Reports for Security Audits</h3>
+          <div class="excel-interface">
+            <div class="excel-row">
+              <div class="excel-cell excel-header">Report Type</div>
+              <div class="excel-cell excel-header">Compliance Standard</div>
+              <div class="excel-cell excel-header">Status</div>
+              <div class="excel-cell excel-header">Last Generated</div>
+            </div>
+            <div class="excel-row">
+              <div class="excel-cell">Security Posture</div>
+              <div class="excel-cell">ISO 27001</div>
+              <div class="excel-cell" style="color: #28a745">✅ Compliant</div>
+              <div class="excel-cell">2 hours ago</div>
+            </div>
+            <div class="excel-row">
+              <div class="excel-cell">System Controls</div>
+              <div class="excel-cell">SOC 2 Type II</div>
+              <div class="excel-cell" style="color: #28a745">✅ Compliant</div>
+              <div class="excel-cell">Daily</div>
+            </div>
+            <div class="excel-row">
+              <div class="excel-cell">Patch Management</div>
+              <div class="excel-cell">PCI DSS</div>
+              <div class="excel-cell" style="color: #ffc107">
+                ⚠️ Minor Issues
+              </div>
+              <div class="excel-cell">Weekly</div>
+            </div>
+          </div>
+
+          <div class="success-alert">
+            <h4>🛡️ Automated Compliance Features:</h4>
+            <ul>
+              <li>Real-time compliance scoring and gap analysis</li>
+              <li>Automated evidence collection for audits</li>
+              <li>Executive dashboards with compliance KPIs</li>
+              <li>Scheduled reports to stakeholders and auditors</li>
+              <li>Risk assessment based on OS vulnerabilities</li>
+              <li>Remediation tracking and progress monitoring</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 9: Live Demo Flow -->
+      <div class="slide">
+        <h2>🎬 Live Demo Flow</h2>
+        <div class="demo-container">
+          <h3>AI Detection in Action</h3>
+          <div class="demo-interface">
+            <div style="color: #00d4ff; margin-bottom: 15px">
+              🔍 SmartDesk AI Detection:
+            </div>
+            <div style="color: #ff6b6b; margin-bottom: 10px">
+              ALERT: Critical Security Update Missing
+            </div>
+            <div style="color: #ffffff; margin-bottom: 10px">
+              Employee: John Smith (Engineering)
+            </div>
+            <div style="color: #ffffff; margin-bottom: 10px">
+              Device: MacBook Pro M2 (Serial: C02DR2AKMD6T)
+            </div>
+            <div style="color: #ffffff; margin-bottom: 10px">
+              Issue: macOS Security Update KB2121 missing
+            </div>
+            <div style="color: #ffc107; margin-bottom: 10px">
+              Risk Level: HIGH - Remote code execution vulnerability
+            </div>
+            <div style="color: #28a745">
+              Action: Auto-deploying security patch via MDM
+            </div>
+          </div>
+
+          <div class="vulnerability-alert">
+            <h4>🤖 AI Workflow:</h4>
+            <ol>
+              <li>Agent detects missing security update KB2121</li>
+              <li>AI analyzes CVE database for vulnerability severity</li>
+              <li>System cross-references with company security policies</li>
+              <li>Automated Slack notification sent to John and IT team</li>
+              <li>AI recommends immediate patch deployment</li>
+              <li>MDM system initiates automatic update process</li>
+              <li>Confirmation and compliance status updated in dashboard</li>
+            </ol>
+          </div>
+
+          <button class="cta-button" onclick="runDemo()">
+            🎬 Run Live Demo
+          </button>
+        </div>
+      </div>
+
+      <!-- Slide 10: ROI Metrics -->
+      <div class="slide">
+        <h2>💰 ROI Metrics</h2>
+        <div class="roi-calculator">
+          <h3>Cost Savings & Risk Reduction</h3>
+          <div class="roi-row">
+            <span>Current Manual OS Management:</span>
+            <span class="highlight">₹6,00,000/month</span>
+          </div>
+          <div class="roi-row">
+            <span>Security Incident Response (avg/month):</span>
+            <span class="highlight">₹3,50,000</span>
+          </div>
+          <div class="roi-row">
+            <span>Productivity Loss (unpatched systems):</span>
+            <span class="highlight">₹2,25,000</span>
+          </div>
+          <div class="roi-row">
+            <span>SmartDesk AI Implementation:</span>
+            <span class="highlight">₹75,000</span>
+          </div>
+          <div class="roi-row">
+            <span>Monthly Operational Cost:</span>
+            <span class="highlight">₹25,000</span>
+          </div>
+          <div
+            class="roi-row"
+            style="
+              background: rgba(0, 212, 255, 0.2);
+              border: 1px solid #00d4ff;
+            "
+          >
+            <span><strong>Monthly Savings:</strong></span>
+            <span class="highlight"><strong>₹8,75,000</strong></span>
+          </div>
+          <div
+            class="roi-row"
+            style="
+              background: rgba(0, 212, 255, 0.2);
+              border: 1px solid #00d4ff;
+            "
+          >
+            <span><strong>Annual ROI:</strong></span>
+            <span class="highlight"><strong>1,300%</strong></span>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-number">90%</span>
+            <span class="stat-label">Reduction in Security Incidents</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number">75%</span>
+            <span class="stat-label">IT Support Ticket Reduction</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number">85%</span>
+            <span class="stat-label">Faster Update Deployment</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 11: Adoption Plan -->
+      <div class="slide">
+        <h2>📋 Adoption Plan</h2>
+        <div class="timeline">
+          <div class="timeline-item">
+            <h4>Phase 1: IT Pilot</h4>
+            <p>Deploy to 25 IT team devices</p>
+            <p>Test monitoring and alerting</p>
+          </div>
+          <div class="timeline-item">
+            <h4>Phase 2: Engineering</h4>
+            <p>Rollout to 67 development devices</p>
+            <p>Validate cross-platform support</p>
+          </div>
+          <div class="timeline-item">
+            <h4>Phase 3: Sales & Marketing</h4>
+            <p>Expand to 79 business devices</p>
+            <p>Implement user training</p>
+          </div>
+          <div class="timeline-item">
+            <h4>Phase 4: Company-wide</h4>
+            <p>Deploy to all 247 devices</p>
+            <p>Full compliance reporting</p>
+          </div>
+        </div>
+        <div class="demo-container">
+          <h3>Rollout Strategy</h3>
+          <div class="dashboard-grid">
+            <div class="dashboard-card">
+              <h4>📅 Week 1-2</h4>
+              <div class="patch-status status-good">
+                <span>IT Pilot</span>
+                <span>25 devices</span>
+              </div>
+              <div class="patch-status status-warning">
+                <span>Agent Testing</span>
+                <span>Core functionality</span>
+              </div>
+            </div>
+
+            <div class="dashboard-card">
+              <h4>📅 Week 3-4</h4>
+              <div class="patch-status status-good">
+                <span>Engineering</span>
+                <span>67 devices</span>
+              </div>
+              <div class="patch-status status-good">
+                <span>Cross-platform</span>
+                <span>Mac, Windows, Linux</span>
+              </div>
+            </div>
+
+            <div class="dashboard-card">
+              <h4>📅 Week 5-6</h4>
+              <div class="patch-status status-good">
+                <span>Business Teams</span>
+                <span>79 devices</span>
+              </div>
+              <div class="patch-status status-good">
+                <span>User Training</span>
+                <span>Self-service portal</span>
+              </div>
+            </div>
+
+            <div class="dashboard-card">
+              <h4>📅 Week 7-8</h4>
+              <div class="patch-status status-good">
+                <span>Full Deployment</span>
+                <span>247 devices</span>
+              </div>
+              <div class="patch-status status-good">
+                <span>Go Live</span>
+                <span>Complete monitoring</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 12: Call to Action -->
+      <div class="slide">
+        <div class="hero-section">
+          <h1>🏆 Let's Win AHAi Challenge 2025!</h1>
+          <h2>Secure Our Company Like Pros with SmartDesk AI 🛡️</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-number">8 Weeks</span>
+              <span class="stat-label">Full Deployment</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number">₹75,000</span>
+              <span class="stat-label">Total Investment</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number">1,300%</span>
+              <span class="stat-label">Annual ROI</span>
+            </div>
+          </div>
+          <div class="success-alert">
+            <h3>🎯 Why SmartDesk AI Will Win:</h3>
+            <ul>
+              <li>Real-world problem solving with immediate impact</li>
+              <li>Scalable solution for modern hybrid workplace</li>
+              <li>AI-powered intelligence with human-friendly interface</li>
+              <li>Proven ROI with measurable security improvements</li>
+              <li>Cross-platform support for diverse IT environments</li>
+              <li>Future-ready architecture for expanding needs</li>
+            </ul>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-number">🏆</span>
+              <span class="stat-label">AHAi Challenge Winner</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number">🛡️</span>
+              <span class="stat-label">Security Excellence</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number">🚀</span>
+              <span class="stat-label">Innovation Leader</span>
+            </div>
+          </div>
+          <button class="cta-button" onclick="startImplementation()">
+            🚀 Start Implementation
+          </button>
+          <button class="cta-button" onclick="joinChallenge()">
+            🏆 Join AHAi Challenge
+          </button>
+          <p style="margin-top: 20px">
+            <strong>Team:</strong> IT Innovation Squad |
+            <strong>Challenge:</strong> AHAi 2025
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="navigation">
+      <button class="nav-btn" onclick="previousSlide()">← Previous</button>
+      <button class="nav-btn" onclick="nextSlide()">Next →</button>
+      <button class="nav-btn" onclick="startPresentation()">▶️ Start</button>
+      <button class="nav-btn" onclick="stopPresentation()">⏹ Stop</button>
+    </div>
+
+    <script>
+      let currentSlideIndex = 0;
+      const slides = document.querySelectorAll(".slide");
+      const totalSlides = slides.length;
+
+      document.getElementById("totalSlides").textContent = totalSlides;
+
+      function showSlide(index) {
+        slides.forEach((slide) => slide.classList.remove("active"));
+        slides[index].classList.add("active");
+
+        document.getElementById("currentSlide").textContent = index + 1;
+        document.getElementById("progressBar").style.width =
+          ((index + 1) / totalSlides) * 100 + "%";
+      }
+
+      function nextSlide() {
+        if (currentSlideIndex < totalSlides - 1) {
+          currentSlideIndex++;
+          showSlide(currentSlideIndex);
+        }
+      }
+
+      function previousSlide() {
+        if (currentSlideIndex > 0) {
+          currentSlideIndex--;
+          showSlide(currentSlideIndex);
+        }
+      }
+
+      function runDemo() {
+        const button = event.target;
+        button.innerHTML = "🔄 Running Demo...";
+        button.disabled = true;
+
+        setTimeout(() => {
+          button.innerHTML = "✅ Demo Complete - John's Mac Updated!";
+          setTimeout(() => {
+            button.innerHTML = "🎬 Run Live Demo";
+            button.disabled = false;
+          }, 2000);
+        }, 3000);
+      }
+
+      function startImplementation() {
+        alert(
+          "🚀 SmartDesk AI implementation initiated! Let's build the future of OS health monitoring."
+        );
+      }
+
+      function joinChallenge() {
+        alert(
+          "🏆 Welcome to AHAi Challenge 2025! SmartDesk AI is ready to win this competition."
+        );
+      }
+
+      // Keyboard navigation
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowRight") {
+          nextSlide();
+        } else if (event.key === "ArrowLeft") {
+          previousSlide();
+        }
+      });
+
+      let isSpeaking = false;
+      let slideTimer;
+      let reviewMode = false;
+
+      // Speech Synthesis
+      const synth = window.speechSynthesis;
+
+      // Get all text from the current slide
+      function getSlideText(slideIndex) {
+        const slide = slides[slideIndex];
+        return slide.innerText || slide.textContent;
+      }
+
+      // Speak a given text
+      function speakText(text, callback) {
+        if (!synth) return;
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.onend = callback;
+        synth.speak(utterance);
+      }
+
+      // Start AI presentation
+      function startPresentation() {
+        if (isSpeaking) return;
+        isSpeaking = true;
+        currentSlideIndex = 0;
+        autoSpeakSlides();
+      }
+
+      // Speak slide by slide
+      function autoSpeakSlides() {
+        if (!isSpeaking || currentSlideIndex >= totalSlides) {
+          askForReview();
+          return;
+        }
+
+        showSlide(currentSlideIndex);
+        const text = getSlideText(currentSlideIndex);
+        speakText(text, () => {
+          currentSlideIndex++;
+          slideTimer = setTimeout(autoSpeakSlides, 1500); // slight delay between slides
+        });
+      }
+
+      // Stop presentation
+      function stopPresentation() {
+        isSpeaking = false;
+        clearTimeout(slideTimer);
+        synth.cancel();
+        showReviews();
+      }
+
+      // Review Input & Capture
+      function askForReview() {
+        reviewMode = true;
+        const text =
+          "We've reached the end. Would you like to give your feedback? Please say your name and your review after the beep.";
+        speakText(text, startVoiceRecognition);
+      }
+
+      // Speech Recognition (Review Mode)
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+
+      recognition.onresult = (event) => {
+        const speech = event.results[0][0].transcript;
+        if (!speech) return;
+        const [name, ...feedbackParts] = speech.split(" ");
+        const review = feedbackParts.join(" ");
+        const reviews = JSON.parse(localStorage.getItem("ai_reviews") || "[]");
+        reviews.push({ name, review });
+        localStorage.setItem("ai_reviews", JSON.stringify(reviews));
+        speakText(`Thanks ${name}, your review has been saved.`, () => {
+          askForMoreReview();
+        });
+      };
+
+      function startVoiceRecognition() {
+        recognition.start();
+      }
+
+      function askForMoreReview() {
+        speakText(
+          "Would anyone else like to leave a review? Say your name and feedback.",
+          startVoiceRecognition
+        );
+      }
+
+      // Show reviews in UI
+      function showReviews() {
+        const reviews = JSON.parse(localStorage.getItem("ai_reviews") || "[]");
+        const slide = slides[currentSlideIndex];
+        const feedbackHTML = `
+    <h2>🗣️ Audience Reviews</h2>
+    <div class="mvp-demo">
+      ${reviews
+        .map((r) => `<p><strong>${r.name}:</strong> ${r.review}</p>`)
+        .join("")}
+    </div>
+  `;
+        slide.innerHTML += feedbackHTML;
+        showSlide(currentSlideIndex);
+      }
+      // Auto-advance demo (optional)
+      // setInterval(nextSlide, 15000); // Uncomment for auto-advance every 15 seconds
+    </script>
+  </body>
+</html>

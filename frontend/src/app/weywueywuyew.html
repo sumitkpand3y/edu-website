@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevPass - AI Knowledge Transfer Assistant</title>
+     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #00d4ff, #ff6b6b);
+            z-index: 1000;
+            transition: width 0.3s ease;
+        }
+
+        .logo {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 1000;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 1.2rem;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-section h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #00d4ff, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-section h2 {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .hero-section p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            opacity: 0.8;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .demo-container {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            border-radius: 20px;
+            margin: 30px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .demo-container h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: #00d4ff;
+        }
+
+        .demo-container h3 {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #ffffff;
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .problem-card {
+            background: rgba(255, 107, 107, 0.2);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid #ff6b6b;
+            transition: transform 0.3s ease;
+        }
+
+        .problem-card:hover {
+            transform: translateX(5px);
+        }
+
+        .problem-card h4 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #ff6b6b;
+        }
+
+        .problem-card p {
+            font-size: 1rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .solution-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .solution-card {
+            background: rgba(40, 167, 69, 0.2);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid #28a745;
+            transition: transform 0.3s ease;
+        }
+
+        .solution-card:hover {
+            transform: translateX(5px);
+        }
+
+        .solution-card h4 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #28a745;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: left;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h4 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #00d4ff;
+        }
+
+        .feature-card p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .demo-interface {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 25px;
+            border-radius: 15px;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .tech-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .tech-item strong {
+            color: #00d4ff;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, #00d4ff, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .cta-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00d4ff, #ff6b6b);
+            z-index: 1;
+        }
+
+        .timeline-item {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 15px;
+            width: 22%;
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .timeline-item h4 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .timeline-item p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(0, 212, 255, 0.3);
+            border-color: #00d4ff;
+        }
+
+        .highlight {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .success-alert {
+            background: rgba(40, 167, 69, 0.2);
+            border: 1px solid #28a745;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .warning-alert {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            overflow-x: auto;
+        }
+
+        ul {
+            text-align: left;
+            margin: 15px 0;
+        }
+
+        li {
+            margin: 8px 0;
+            padding-left: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-section h2 {
+                font-size: 1.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .timeline {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .timeline-item {
+                width: 100%;
+            }
+            
+            .timeline::before {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="logo">🚀 DevPass</div>
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">8</span>
+    </div>
+
+    <div class="container">
+        <!-- Slide 1: Title -->
+        <!-- <div class="slide active">
+            <div class="hero-section">
+                <h1>🚀 DevPass</h1>
+                <h2>AI-Powered Knowledge Transfer Assistant</h2>
+                <p>Stop playing detective. Start shipping faster. DevPass makes developer handovers seamless, intelligent, and complete.</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number">90%</span>
+                        <span class="stat-label">Less Onboarding Time</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Knowledge Captured</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">3x</span>
+                        <span class="stat-label">Faster Handovers</span>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+
+        <!-- Slide 2: The Problem -->
+        <!-- <div class="slide">
+            <h2>🔍 The Handover Headache</h2>
+            <div class="demo-container">
+                <h3>Why Developer Handovers Fail</h3>
+                <ul>
+                    <li>Scattered or non-existent documentation.</li>
+                    <li>Hidden business logic and undocumented decisions.</li>
+                    <li>"Tribal knowledge" lost in DMs and meetings.</li>
+                    <li>New developers spending weeks just to understand the codebase.</li>
+                    <li>Massive time sink for both outgoing and incoming engineers.</li>
+                </ul>
+            </div>
+        </div> -->
+
+        <!-- Slide 3: The Solution -->
+        <!-- <div class="slide">
+            <h2>💡 The DevPass Solution</h2>
+            <div class="demo-container">
+                <h3>An AI Assistant for Knowledge Transfer</h3>
+                <p>DevPass uses AI to auto-generate a contextual knowledge base for any project. It analyzes code, summarizes features, tracks decisions, and creates a living document for the next developer.</p>
+            </div>
+        </div> -->
+
+        <!-- Slide 4: MVP Features -->
+        <!-- <div class="slide">
+            <h2>🔥 MVP Features</h2>
+            <div class="ai-tools-grid">
+                <div class="tool-card">
+                    <h4>Codebase Analysis</h4>
+                    <p>Connect a Git repo and let the AI summarize folders, files, and core logic.</p>
+                </div>
+                <div class="tool-card">
+                    <h4>Voice & Text Notes</h4>
+                    <p>Allow developers to record short audio or text notes that AI transcribes and integrates.</p>
+                </div>
+                <div class="tool-card">
+                    <h4>Auto-Generated FAQ</h4>
+                    <p>Answers common questions like "How do I set this up locally?" or "Why was this library chosen?".</p>
+                </div>
+                <div class="tool-card">
+                    <h4>Chat Interface</h4>
+                    <p>New developers can ask questions in natural language and get instant, context-aware answers.</p>
+                </div>
+                <div class="tool-card">
+                    <h4>Exportable Docs</h4>
+                    <p>Generate clean Markdown or PDF documents for offline access or official records.</p>
+                </div>
+            </div>
+        </div> -->
+
+        <!-- Slide 5: Tech Stack -->
+        <!-- <div class="slide">
+            <h2>🛠️ Tech Stack Suggestion</h2>
+            <div class="demo-container">
+                <ul>
+                    <li><strong>Frontend:</strong> Next.js + Tailwind CSS + React Query</li>
+                    <li><strong>Backend:</strong> Node.js/Express or Next.js API Routes</li>
+                    <li><strong>AI Layer:</strong> OpenAI (GPT-4o) / Ollama (for local)</li>
+                    <li><strong>Code Parsing:</strong> Tree-sitter & Abstract Syntax Trees (AST)</li>
+                    <li><strong>Database:</strong> PostgreSQL for metadata and logs</li>
+                    <li><strong>Authentication:</strong> Clerk or Auth.js</li>
+                </ul>
+            </div>
+        </div> -->
+
+        <!-- Slide 6: Future Roadmap -->
+        <!-- <div class="slide">
+            <h2>🚀 Bonus Features (The Future)</h2>
+            <div class="demo-container">
+                <ul>
+                    <li>Auto-capture summaries from commit messages.</li>
+                    <li>A Slack/Discord bot for on-the-fly handovers.</li>
+                    <li>Git pre-commit hook to enforce AI-summary updates.</li>
+                    <li>Integrations with Notion, Jira, and Confluence.</li>
+                </ul>
+            </div>
+        </div> -->
+
+        <!-- Slide 7: The Pitch -->
+        <!-- <div class="slide">
+            <div class="hero-section">
+                <h2>🎤 The Pitch</h2>
+                <p style="font-size: 2rem; font-style: italic;">“DevPass is your AI teammate that never forgets what you built. So the next dev doesn’t spend 3 weeks playing Sherlock — they just ask.”</p>
+            </div>
+        </div> -->
+
+        <!-- Slide 8: Call to Action -->
+        <!-- <div class="slide">
+            <h2>🙌 Let's Build It!</h2>
+            <div class="hero-section">
+                <h3>What should we generate next?</h3>
+                <p>Let's blow the judges' minds.</p>
+                <div style="margin-top: 30px;">
+                    <button class="cta-button" onclick="alert('Generating UI Mockup...')">🖼️ UI Mockup</button>
+                    <button class="cta-button" onclick="alert('Generating Backend Code...')">🔥 Backend Code</button>
+                    <button class="cta-button" onclick="alert('Generating AI Prompt Base...')">🤖 AI Prompts</button>
+                </div>
+            </div>
+        </div> -->
+<!-- Slide 1: Hero -->
+        <div class="slide active">
+            <div class="hero-section">
+                <h1>🚀 DevPass – AI Knowledge Transfer Assistant</h1>
+                <h2>Never Lose Developer Knowledge Again</h2>
+                <p>AI-powered handover documentation that actually works</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number">3 weeks</span>
+                        <span class="stat-label">Typical Onboarding Reduced to 3 Days</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">90%</span>
+                        <span class="stat-label">Less Time Playing Detective</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">Zero</span>
+                        <span class="stat-label">Lost Tribal Knowledge</span>
+                    </div>
+                </div>
+                <p><strong>Solution:</strong> AI Code Analysis + Smart Documentation + Chat Interface</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: The Problem -->
+        <div class="slide">
+            <div class="demo-container">
+                <h2>🚨 The Knowledge Transfer Problem</h2>
+                <h3>When developers leave, chaos follows</h3>
+                
+                <div class="problem-grid">
+                    <div class="problem-card">
+                        <h4>📄 Documentation Hell</h4>
+                        <p>Scattered docs, outdated README files, and missing context about why decisions were made</p>
+                    </div>
+                    <div class="problem-card">
+                        <h4>🧠 Tribal Knowledge Loss</h4>
+                        <p>Critical business logic lives only in someone's head - until they leave</p>
+                    </div>
+                    <div class="problem-card">
+                        <h4>🔍 Detective Work</h4>
+                        <p>New devs spend weeks figuring out what the previous person built</p>
+                    </div>
+                    <div class="problem-card">
+                        <h4>⏰ Handover Chaos</h4>
+                        <p>Rushed 30-minute calls and endless Slack threads that explain nothing</p>
+                    </div>
+                </div>
+                
+                <div class="warning-alert">
+                    <h4>💸 The Real Cost:</h4>
+                    <ul>
+                        <li>Average 3-week onboarding for complex projects</li>
+                        <li>Lost productivity during knowledge gaps</li>
+                        <li>Repeated bugs from missing context</li>
+                        <li>Fear of touching "legacy" code nobody understands</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: The Vision -->
+        <div class="slide">
+            <div class="demo-container">
+                <h2>🎯 The DevPass Vision</h2>
+                <h3>AI that understands your code better than you do</h3>
+                
+                <div class="solution-grid">
+                    <div class="solution-card">
+                        <h4>🤖 Smart Code Analysis</h4>
+                        <p>AI reads your entire codebase and explains what each component does</p>
+                    </div>
+                    <div class="solution-card">
+                        <h4>💬 Interactive Knowledge Chat</h4>
+                        <p>New devs can ask "How does login work?" and get instant answers</p>
+                    </div>
+                    <div class="solution-card">
+                        <h4>📋 Auto-Generated Docs</h4>
+                        <p>Living documentation that updates with your code changes</p>
+                    </div>
+                    <div class="solution-card">
+                        <h4>🎤 Voice Handovers</h4>
+                        <p>Record quick voice notes, AI transcribes and organizes them</p>
+                    </div>
+                </div>
+                
+                <div class="success-alert">
+                    <p>🎯 <strong>Vision:</strong> Your AI teammate that never forgets what you built, so the next dev doesn't spend 3 weeks playing Sherlock Holmes.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: MVP Features -->
+        <div class="slide">
+            <div class="demo-container">
+                <h2>🔥 MVP Features</h2>
+                <h3>Keep it lean, make it powerful</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h4>Codebase Analysis</h4>
+                        <p>Connect GitHub/GitLab repo, auto-summarize folders, files, and core logic</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎤</div>
+                        <h4>Voice/Text Notes</h4>
+                        <p>Record handover notes, AI transcribes and organizes into clean docs</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">❓</div>
+                        <h4>Auto-Generated FAQ</h4>
+                        <p>"How do I set this up?" "What's the DB logic?" - AI creates common Q&A</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <h4>Chat Interface</h4>
+                        <p>Ask: "Where is auth handled?" Get answers based on actual code</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📄</div>
+                        <h4>Exportable Docs</h4>
+                        <p>PDF/Markdown export, shareable links for team leads</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h4>Real-time Updates</h4>
+                        <p>Documentation stays fresh as code changes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: AI Demo -->
+        <div class="slide">
+            <div class="demo-container">
+                <h2>🧠 AI in Action</h2>
+                <h3>Live Code Analysis Demo</h3>
+                
+                <div class="demo-interface">
+                    <div style="color: #00d4ff; margin-bottom: 15px;">🤖 DevPass AI Analysis:</div>
+                    <div style="color: #ffffff; margin-bottom: 10px;">📁 Analyzing repository: /src/auth/</div>
+                    <div style="color: #28a745; margin-bottom: 10px;">✅ Found authentication module</div>
+                    <div style="color: #ffffff; margin-bottom: 10px;">🔍 Components: JWT middleware, OAuth handlers, user validation</div>
+                    <div style="color: #ffc107; margin-bottom: 10px;">⚠️ Note: Custom token refresh logic in auth.service.js</div>
+                    <div style="color: #00d4ff; margin-bottom: 10px;">📋 Dependencies: passport, jsonwebtoken, bcrypt</div>
+                    <div style="color: #ffffff;">💡 Ready to answer questions about this module!</div>
+                </div>
+                
+                <div class="demo-interface" style="margin-top: 20px;">
+                    <div style="color: #00d4ff; margin-bottom: 15px;">👨‍💻 New Dev: "How does the login flow work?"</div>
+                    <div style="color: #28a745; margin-bottom: 10px;">🤖 DevPass: "The login flow follows these steps:</div>
+                    <div style="color: #ffffff; margin-bottom: 5px;">1. User submits credentials to /api/auth/login</div>
+                    <div style="color: #ffffff; margin-bottom: 5px;">2. auth.controller.js validates against bcrypt hash</div>
+                    <div style="color: #ffffff; margin-bottom: 5px;">3. JWT token generated with 24h expiry</div>
+                    <div style="color: #ffffff; margin-bottom: 5px;">4. Refresh token stored in httpOnly cookie</div>
+                    <div style="color: #ffc107;">⚠️ Special note: Admin users get extended 7-day tokens"</div>
+                </div>
+                
+                <button class="cta-button" onclick="runAIDemo()">🧠 Run AI Analysis</button>
+            </div>
+        </div>
+
+        <!-- Slide 6: Tech Stack -->
+        <div class="slide">
+            <div class="demo-container">
+                <h2>🛠️ Tech Stack</h2>
+                <h3>Modern, scalable, AI-powered</h3>
+                
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <strong>Frontend</strong>
+                        Next.js + Tailwind + React Query
+                    </div>
+                    <div class="tech-item">
+                        <strong>Backend</strong>
+                        Node.js/Express + Next.js API
+                    </div>
+                    <div class="tech-item">
+                        <strong>AI Layer</strong>
+                        OpenAI GPT-4 / Ollama (local)
+                    </div>
+                    <div class="tech-item">
+                        <strong>Code Parsing</strong>
+                        Tree-sitter + AST + GitHub API
+                    </div>
+                    <div class="tech-item">
+                        <strong>Database</strong>
+                        PostgreSQL + Redis cache
+                    </div>
+                    <div class="tech-item">
+                        <strong>Auth</strong>
+                        Clerk/Auth.js + RBAC
+                    </div>
+                </div>
+                
+                <div class="code-block">
+                    <div style="color: #00d4ff;">// Sample AI Prompt for Code Analysis</div>
+                    <div style="color: #28a745;">const analyzeCode = `</div>
+                    <div style="color: #ffffff;">You're a senior engineer reviewing this project for handover.</div>
+                    <div style="color: #ffffff;">Generate a summary of:</div>
+                    <div style="color: #ffffff;">- Project purpose and core modules</div>
+                    <div style="color: #ffffff;">- Setup steps and environment variables</div>
+                    <div style="color: #ffffff;">- Key decisions and architectural choices</div>
+                    <div style="color: #ffffff;">- Common gotchas and debugging tips</div>
+                    <div style="color: #28a745;">`;</div>
+                </div>
+                
+                <div class="success-alert">
+                    <h4>🚀 Bonus Features (Future):</h4>
+                    <ul>
+                        <li>Auto-capture commit-level summaries</li>
+                        <li>Slack/Discord handover bot</li>
+                        <li>Git pre-commit hooks for AI summaries</li>
+                        <li>Integration with Notion, Jira, Confluence</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: User Experience -->
+        <div class="slide">
+            <div class="demo-container">
+                <h2>👥 User Experience</h2>
+                <h3>For developers, by developers</h3>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h4>Leaving Developer</h4>
+                        <p>1. Connect repo<br>2. Record 10-min voice note<br>3. AI handles the rest</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🆕</div>
+                        <h4>New Developer</h4>
+                        <p>1. Access knowledge base<br>2. Ask questions via chat<br>3. Get instant answers</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">👨‍💼</div>
+                        <h4>Team Lead</h4>
+                        <p>1. Review handover docs<br>2. Track knowledge gaps<br>3. Ensure smooth transitions</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🏢</div>
+                        <h4>HR/Manager</h4>
+                        <p>1. Verify handover completion<br>2. Export documentation<br>3. Compliance reporting</p>
+                    </div>
+                </div>
+                
+                <div class="demo-interface">
+                    <div style="color: #00d4ff; margin-bottom: 15px;">💬 Sample Chat Interaction:</div>
+                    <div style="color: #ffffff; margin-bottom: 10px;">New Dev: "How do I run this locally?"</div>
+                    <div style="color: #28a745; margin-bottom: 10px;">DevPass: "Here's the setup process:</div>
+                    <div style="color: #ffffff; margin-bottom: 5px;">1. npm install</div>
+                    <div style="color: #ffffff; margin-bottom: 5px;">2. Copy .env.example to .env</div>
+                    <div style="color: #ffffff; margin-bottom: 5px;">3. Set DATABASE_URL and API_KEY</div>
+                    <div style="color: #ffffff; margin-bottom: 5px;">4. Run: npm run dev</div>
+                    <div style="color: #ffc107;">⚠️ Note: You need Redis running on port 6379"</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Implementation Plan -->
+        <div class="slide">
+            <div class="demo-container">
+                <h2>📋 Implementation Plan</h2>
+                <h3>MVP to Production in 8 weeks</h3>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h4>Week 1-2: Core AI</h4>
+                        <p>Code analysis engine</p>
+                        <p>GitHub API integration</p>
+                        <p>Basic chat interface</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4>Week 3-4: UI/UX</h4>
+                        <p>Dashboard design</p>
+                        <p>Voice recording</p>
+                        <p>Document export</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4>Week 5-6: Features</h4>
+                        <p>Advanced AI prompts</p>
+                        <p>Multi-repo support</p>
+                        <p>Team collaboration</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4>Week 7-8: Polish</h4>
+                        <p>Testing & optimization</p>
+                        <p>Security hardening</p>
+                        <p>Production deployment</p>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number">2</span>
+                        <span class="stat-label">Developers Needed</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">$5K</span>
+                        <span class="stat-label">MVP Development Cost</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">8</span>
+                        <span class="stat-label">Weeks to Launch</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Business Impact -->
+<div class="slide">
+    <div class="demo-container">
+        <h2>💰 Business Impact</h2>
+        <h3>ROI that actually matters</h3>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number">70%</span>
+                <span class="stat-label">Faster Onboarding</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">50%</span>
+                <span class="stat-label">Reduced Context Loss</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">90%</span>
+                <span class="stat-label">Better Knowledge Retention</span>
+            </div>
+        </div>
+
+        <div class="success-alert">
+            <h4>🎯 The Bottom Line:</h4>
+            <ul>
+                <li>⏳ Slash developer ramp-up time from weeks to days</li>
+                <li>🔒 Preserve critical project knowledge even when team members leave</li>
+                <li>🚫 Say goodbye to repeated bugs and blind refactors</li>
+                <li>📊 Boost productivity and confidence across dev teams</li>
+                <li>💸 Save thousands in onboarding and training costs</li>
+            </ul>
+        </div>
+
+        <div class="demo-interface" style="margin-top: 20px;">
+            <div style="color: #00d4ff; margin-bottom: 10px;">💡 DevPass in one line:</div>
+            <div style="color: #ffffff;">An AI teammate that never forgets – bridging the gap between the dev who left and the one who’s next.</div>
+        </div>
+    </div>
+</div>
+
+
+        <!-- Slide 10: Call to Action -->
+<div class="slide">
+    <div class="demo-container">
+        <h2>🚀 Ready to Never Lose Dev Knowledge Again?</h2>
+        <h3>Let’s build smarter, not harder</h3>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <h4>Proven Pain Point</h4>
+                <p>Every dev team faces knowledge gaps during transitions – DevPass fixes that.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <h4>Massive ROI</h4>
+                <p>Save 3+ weeks per hire. Reduce downtime. Prevent critical errors.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚙️</div>
+                <h4>AI-First Infra</h4>
+                <p>Designed from scratch for automation, speed, and developer joy.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h4>Let's Ship It!</h4>
+                <p>Team is ready. Tech is here. Let’s launch DevPass within 8 weeks.</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="cta-button" onclick="alert('Let’s win this challenge!')">💡 Pitch DevPass Today</button>
+        </div>
+    </div>
+</div>
+
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="navigation">
+        <button class="nav-btn" onclick="prevSlide()">⬅️ Prev</button>
+        <button class="nav-btn" onclick="nextSlide()">Next ➡️</button>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const totalSlidesElement = document.getElementById('totalSlides');
+        const currentSlideElement = document.getElementById('currentSlide');
+        const progressBar = document.getElementById('progressBar');
+
+        let currentSlide = 0;
+
+        totalSlidesElement.innerText = totalSlides;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            currentSlideElement.innerText = index + 1;
+            const progress = ((index + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        // Keyboard arrow navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            else if (e.key === 'ArrowLeft') prevSlide();
+        });
+    </script>
+</body>
+</html>

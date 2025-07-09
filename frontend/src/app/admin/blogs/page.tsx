@@ -27,6 +27,7 @@ import {
   updateBlog,
   deleteBlog,
 } from "@/hooks/blogApi";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 // Rich Text Editor Component
 const RichTextEditor = ({ value, onChange, placeholder }) => {
@@ -227,6 +228,7 @@ const estimateReadTime = (content) => {
 };
 
 export default function BlogAdmin() {
+  useAuthGuard();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");

@@ -1,239 +1,133 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useParams } from 'next/navigation'
-import { ChevronDown, ChevronRight } from 'lucide-react'
-import { getCourseBySlug } from "@/hooks/courseApi";
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import {
+  ChevronDown,
+  ChevronRight,
+  X,
+  MapPin,
+  Phone,
+  Mail,
+  User,
+  GraduationCap,
+  Building,
+  Calendar,
+  Clock,
+  Star,
+  Users,
+  Award,
+  BookOpen,
+  Target,
+  Zap,
+  CheckCircle,
+  Eye,
+  Download,
+  Play,
+} from "lucide-react";
+
+// Import your hooks
+import { useCourses } from "@/hooks/useCourses";
+
+interface ExtendedCourse {
+  id: string;
+  title: string;
+  slug: string;
+  subtitle: string;
+  duration: string;
+  level: string;
+  rating: number;
+  price: number;
+  originalPrice?: number;
+  batchStartDate: string;
+  nextReviewDate: string;
+  outcomes: string[];
+  about: string;
+  curriculum: { module: string; topics: string[] }[];
+  targetAudience: string;
+  knowledgePartner: string;
+  partnerLogo?: string;
+  certificateImage?: string;
+  faculty: {
+    name: string;
+    title: string;
+    department: string;
+    bio: string;
+    image?: string;
+  }[];
+  faqs: {
+    question: string;
+    answer: string;
+  }[];
+  relatedCourses: {
+    title: string;
+    description: string;
+    level: string;
+    duration: string;
+    rating: number;
+    price: number;
+    slug: string;
+  }[];
+  features?: string[];
+  totalStudents?: number;
+  completionRate?: number;
+}
 
 const CourseDetailPage = () => {
-  const [expandedFaq, setExpandedFaq] = useState(null);
-  const [activeIndex, setActiveIndex] = useState<number | null>(0)
-  const { slug } = useParams()
-   type CourseData = {
-     id: number;
-     title: string;
-     subtitle: string;
-     duration: string;
-     level: string;
-     rating: number;
-     price: number;
-     batchStartDate: string;
-     nextReviewDate: string;
-     outcomes: string[];
-     about: string;
-     curriculum: { module: string; topics: string[] }[];
-     targetAudience: string;
-     knowledgePartner: string;
-     faculty: {
-       name: string;
-       title: string;
-       department: string;
-       bio: string;
-     }[];
-     faqs: {
-       question: string;
-       answer: string;
-     }[];
-     relatedCourses: {
-       title: string;
-       description: string;
-       level: string;
-       duration: string;
-       rating: number;
-       price: number;
-     }[];
-   };
-   const [courseData, setCourseData] = useState<CourseData | null>(null)
+  const { slug } = useParams();
+  const { getCourseBySlug } = useCourses();
 
-  const handleToggle = (index: number) => {
-    setActiveIndex(prev => (prev === index ? null : index))
-  }
-  useEffect(() => {
-  const fetchCourse = async () => {
-    if (!slug) return;
-
-    try {
-      const res = await getCourseBySlug(slug as string);
-      // const course = res?.course?.find(
-      //   (course: { slug: string }) => course.slug === slug
-      // );
-
-      if (res.course) {
-        setCourseData(res.course);
-      } else {
-        console.warn("Course not found for slug:", slug);
-      }
-    } catch (err) {
-      console.error("Failed to load course data", err);
-    }
-  };
-
-  fetchCourse();
-}, [slug]);
-
-  const [formData, setFormData] = useState({
-    name: "",
+  const [courseData, setCourseData] = useState<ExtendedCourse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(0);
+  const [showEnquiryModal, setShowEnquiryModal] = useState(false);
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [showBuyNowModal, setShowBuyNowModal] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  // Enquiry form state
+  const [enquiryForm, setEnquiryForm] = useState({
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     qualification: "",
+    location: "",
+    agreeToPromotions: false,
   });
+  const [showStickyFooter, setShowStickyFooter] = useState(false);
 
-  // Course data - matches the AI Healthcare course from the images
-//   const courseData = {
-//     id: 1,
-//     title: "Artificial Intelligence in Healthcare: Theory to Practice",
-//     subtitle: "Integrate AI in Healthcare for a Smarter Future",
-//     duration: "3 Months",
-//     level: "Advanced",
-//     rating: 4.5,
-//     price: 125000,
-//     batchStartDate: "Coming Soon",
-//     nextReviewDate: "28th Jan, 2025",
+  // Fetch course data
+  useEffect(() => {
+    const fetchCourse = async () => {
+      if (!slug) return;
 
-//     outcomes: [
-//       "Tailored experiential practical-oriented curriculum designed for healthcare professionals",
-//       "More than 50% curriculum dedicated to the practical application of artificial intelligence in solving healthcare challenges",
-//       "Live weekend sessions by top Artificial Intelligence faculty of Indian Institute of Science",
-//       "Dedicated mentorship by Artificial Intelligence expert faculty",
-//       "Exclusive mathematics/computing bridge module designed for healthcare professionals",
-//       "Certificate from Indian Institute of Science and Aster Health Academy",
-//     ],
+      setLoading(true);
+      setError(null);
 
-//     about: `This comprehensive program is designed to equip healthcare professionals with the knowledge and skills required to harness the power of Artificial Intelligence (AI) in the field of healthcare. Throughout this program, you will delve into the theoretical as well as practical aspects of Artificial Intelligence in solving complex healthcare problems. By the end of this program, you will not only understand the fundamental principles of Artificial Intelligence but also be adept at applying AI methods to address real-world healthcare challenges.
+      try {
+        const response = await getCourseBySlug(slug as string);
+        if (response && response.course) {
+          setCourseData(response.course);
+        } else {
+          setError("Course not found");
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to load course data");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-// This all-inclusive program is taught by expert Artificial Intelligence faculty members of the Indian Institute of Science (IISc) and will also have an exclusive Mathematics/Computing bridge module designed for healthcare professionals, ensuring you have the essential foundation required to excel in this program. Get ready to embark on an exciting journey, led by the esteemed faculty of IISc that bridges the gap between theory and practice, empowering you to make a significant impact in the dynamic realm of Artificial Intelligence-driven healthcare.`,
+    fetchCourse();
+  }, [slug]);
 
-//     curriculum: [
-//       {
-//         module: "Module 1: Foundations of AI in Healthcare",
-//         topics: [
-//           "Digital Data and Representation",
-//           "Mathematical Foundations",
-//           "Healthcare Data and Systems",
-//         ],
-//       },
-//       {
-//         module: "Module 2: AI Techniques and Applications",
-//         topics: [
-//           "Machine Learning in Healthcare",
-//           "Deep Learning for Medical Imaging",
-//           "Natural Language Processing for Medical Records",
-//           "Predictive Analytics in Patient Care",
-//         ],
-//       },
-//       {
-//         module: "Module 3: Practical Applications and Challenges",
-//         topics: [
-//           "Ethics and Bias in Healthcare AI",
-//           "Regulatory Compliance and Standards",
-//           "Implementation Strategies",
-//           "Case Studies and Real-world Projects",
-//         ],
-//       },
-//     ],
+  const handleToggle = (index: number) => {
+    setActiveIndex((prev) => (prev === index ? null : index));
+  };
 
-//     targetAudience: `This course is tailored for healthcare professionals, data scientists, researchers, academics, health IT professionals, policy makers, administrators, and aspiring entrepreneurs who are passionate about leveraging Artificial Intelligence to transform healthcare. This comprehensive program equips participants with the knowledge and skills to apply Artificial Intelligence techniques in areas such as diagnostics, treatment planning, predictive modeling, medical research, and health informatics. Whether you are seeking to enhance patient care, drive innovation, or navigate the ethical and regulatory aspects of Artificial Intelligence in healthcare, this course provides a valuable platform for individuals from diverse backgrounds to explore and excel at the intersection of Artificial Intelligence and healthcare.`,
-
-//     knowledgePartner: `The Indian Institute of Science (IISc) is our knowledge partner for the Artificial Intelligence in Healthcare: Theory to Practice course. As a prestigious institution renowned for its academic excellence and ground-breaking research, IISc brings unparalleled expertise and resources to our program. Collaborating with IISc ensures that our course benefits from their vast knowledge in areas such as Artificial Intelligence, healthcare, and interdisciplinary studies. Through this partnership, we are able to provide learners with a unique opportunity to learn from distinguished faculty members, access cutting-edge facilities, and engage in innovative research at the forefront of Artificial Intelligence in healthcare. This collaboration with IISc reinforces our commitment to delivering a top-tier educational experience and advancing the field of Artificial Intelligence in healthcare.`,
-
-//     faculty: [
-//       {
-//         name: "Prof. Phaneendra Yalavarthy",
-//         title: "Professor",
-//         department:
-//           "Department of Computational and Data Sciences, IISc, Bangalore, India",
-//         bio: "Prof. Yalavarthy is a renowned artificial intelligence expert in the area of medical imaging. He has published more than 70 international journal articles in the area of medical imaging and leads successful collaborations labs with industries like GE Healthcare. He was instrumental in establishing Aster AI Lab, which is one of the first AI labs in India in a healthcare facility. He has active engagements with the medical imaging industry stake holders including GE Healthcare, Siemens Healthineers, Samsung Healthcare, and Telemedicine Solutions, fostering impactful collaborations. His research interests include artificial intelligence in medical imaging, digital health, and biomedical signal processing.",
-//       },
-//       {
-//         name: "Dr. Lokesh B",
-//         title: "Neurologist",
-//         department: "Aster CMI Hospital, Bangalore",
-//         bio: "Dr. Lokesh is the head of Neurosciences at Aster CMI Hospital, has trained in cerebrovascular Sonography from National University Hospital, Singapore and the University of Alabama, Birmingham, USA. He completed his super specialty training in neurology from the Institute of Neurology, B&Y & Netherlands. He leads the Aster AI lab and collaborates actively with Indian Institute of Science. He is passionate about application of artificial intelligence in healthcare and improving the patient care. He completed his MBBS, MD in General medicine and DM Neurology from Kasturba medical college, Manipal, India.",
-//       },
-//       {
-//         name: "Prof. Ambedkar Dukkipati",
-//         title: "Professor of Artificial Intelligence",
-//         department: "Computer Science and Automation, IISc, Bangalore, India",
-//         bio: "Prof. Dukkipati is an expert faculty member of artificial intelligence at IISc and teaches machine learning/deep learning courses regularly. He leads Statistics and Machine Learning group at IISc. He has active collaborations with GE Healthcare, Novartis, and Shell Technology Centre in the area of artificial intelligence. His research interests include machine learning, network representation learning, sequential decision-making under uncertainty, and deep reinforcement learning.",
-//       },
-//       {
-//         name: "Dr. Vasanthi Sundaresan",
-//         title:
-//           "Assistant Professor of Department of Computational and Data Sciences",
-//         department: "IISc, Bangalore",
-//         bio: "Dr. Vasanthi Sundaresan is an assistant professor at IISc, where she leads the Biomedical Image Analysis (BioMedIA) laboratory. Her academic journey includes postdoctoral work at Harvard Medical School, a doctorate from the University of Oxford, and an M.S. from IIITM. She specializes in diverse research areas, including machine learning, artificial intelligence, and machine learning, medical imaging neuroimaging and tool development.",
-//       },
-//     ],
-
-//     faqs: [
-//       {
-//         question: "What is the duration of this course?",
-//         answer:
-//           "This course is designed to be completed in 3 months with live weekend sessions.",
-//       },
-//       {
-//         question: "How long can I access the learning content?",
-//         answer:
-//           "You will have access to the learning content for 6 months from the course start date.",
-//       },
-//       {
-//         question: "How much time do I need to invest in this course?",
-//         answer:
-//           "The course requires approximately 6-8 hours per week including live sessions and self-study.",
-//       },
-//       {
-//         question: "What is the duration of the synchronous weekend session?",
-//         answer:
-//           "The live weekend sessions are typically 3-4 hours long, conducted on Saturdays or Sundays.",
-//       },
-//       {
-//         question: "Will I be awarded a certificate upon course completion?",
-//         answer:
-//           "Yes, you will receive a joint certificate from Indian Institute of Science and Aster Health Academy upon successful completion.",
-//       },
-//       {
-//         question: "Is financial aid available for participants?",
-//         answer:
-//           "We offer various payment plans and scholarships for eligible candidates. Please contact our support team for more details.",
-//       },
-//       {
-//         question: "Is there a refund policy?",
-//         answer:
-//           "Yes, we have a 7-day refund policy from the course start date. Please refer to our terms and conditions for complete details.",
-//       },
-//     ],
-
-//     relatedCourses: [
-//       {
-//         title: "Fellowship Level Program in Cardiology",
-//         description:
-//           "Gain expertise in pediatric cardiology, preventive care and di...",
-//         level: "Advanced",
-//         duration: "16 Months",
-//         rating: 4.8,
-//         price: 850000,
-//       },
-//       {
-//         title: "MEM - GMU",
-//         description:
-//           "Earn an advanced international degree in Emergency Medicine",
-//         level: "Advanced",
-//         duration: "15 Months",
-//         rating: 4.6,
-//         price: 650000,
-//       },
-//       {
-//         title: "Fellowship Level Program in Diabetes Mellitus",
-//         description:
-//           "Understand and identify types of diseases, address complications...",
-//         level: "Advanced",
-//         duration: "15 Months",
-//         rating: 4.7,
-//         price: 950000,
-//       },
-//     ],
-//   };
-
-  const formatPrice = (price) => {
+  const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
@@ -241,433 +135,245 @@ const CourseDetailPage = () => {
     }).format(price);
   };
 
-  const handleFormSubmit = (e) => {
+  const handleEnquirySubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Application submitted successfully! We will contact you soon.");
+    // Handle enquiry form submission
+    console.log("Enquiry submitted:", enquiryForm);
+    alert("Thank you for your enquiry! We will contact you soon.");
+    setShowEnquiryModal(false);
+    setEnquiryForm({
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      qualification: "",
+      location: "",
+      agreeToPromotions: false,
+    });
   };
 
-  const StarRating = ({ rating }) => (
-    <div className="flex items-center">
+  const handleCouponApply = () => {
+    // Handle coupon application logic
+    if (couponCode.trim()) {
+      setAppliedCoupon(couponCode);
+      // You can add actual coupon validation logic here
+      alert(`Coupon "${couponCode}" applied successfully!`);
+    }
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setShowStickyFooter(true);
+      } else {
+        setShowStickyFooter(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const qualificationOptions = [
+    "MBchB",
+    "MBBS",
+    "MD/MS/DNB",
+    "Post Graduate - Medical",
+    "MDS/BDS",
+    "Alternative Medicine",
+    "Nursing - GNM",
+    "Management",
+    "Others",
+  ];
+
+  const StarRating = ({ rating }: { rating: number }) => (
+    <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
-        <svg
+        <Star
           key={star}
           className={`w-4 h-4 ${
-            star <= rating ? "text-yellow-400" : "text-gray-300"
+            star <= rating ? "text-yellow-400 fill-current" : "text-gray-300"
           }`}
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
+        />
       ))}
+      <span className="ml-1 text-sm text-gray-600">({rating})</span>
     </div>
   );
-if (!courseData) return <p>Loading...</p>
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Loading course details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <X className="w-12 h-12 mx-auto" />
+          </div>
+          <p className="text-lg text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!courseData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <p className="text-lg text-gray-600">Course not found</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r ">
+      <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 py-12">
             {/* Left Column - Course Info */}
-            <div className="lg:col-span-2 space-y-12">
-              <div className="flex items-center mb-4">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+                  <span className="text-sm font-medium">Featured Course</span>
+                </div>
                 <StarRating rating={courseData.rating} />
-                <span className="ml-2 text-sm">{courseData.rating}</span>
               </div>
 
-              <h1 className="text-4xl font-bold mb-4">{courseData.title}</h1>
-              <p className="text-xl mb-8">{courseData.subtitle}</p>
+              <h1 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
+                {courseData.title}
+              </h1>
+              <p className="text-xl text-blue-100 mb-8">
+                {courseData.subtitle}
+              </p>
 
-              <div className="space-y-6">
-                <h3 className="text-2xl font-semibold">Course Outcomes:</h3>
-                <ul className="space-y-3">
-                  {courseData.outcomes.map((outcome, index) => (
-                    <li key={index} className="flex items-start">
-                      <svg
-                        className="w-5 h-5 text-green-400 mr-3 mt-1 flex-shrink-0"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span className="text-sm leading-relaxed">{outcome}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-8 flex items-center space-x-6">
-                <div className="flex space-x-2">
-                  <span className="bg-blue-600 p-2 rounded">
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
-                    </svg>
-                  </span>
-                  <span className="bg-green-600 p-2 rounded">
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488" />
-                    </svg>
-                  </span>
-                  <span className="bg-blue-700 p-2 rounded">
-                    <svg
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                    </svg>
-                  </span>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+                  <Clock className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-sm opacity-90">Duration</p>
+                  <p className="font-semibold">{courseData.duration}</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+                  <Users className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-sm opacity-90">Level</p>
+                  <p className="font-semibold">{courseData.level}</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+                  <Award className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-sm opacity-90">Certificate</p>
+                  <p className="font-semibold">IISc & Aster</p>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center">
+                  <Target className="w-6 h-6 mx-auto mb-2" />
+                  <p className="text-sm opacity-90">Rating</p>
+                  <p className="font-semibold">{courseData.rating}/5</p>
                 </div>
               </div>
-              <div className="lg:col-span-2 space-y-12">
-                {/* About the Course */}
-                <section>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                    About the course:
-                  </h2>
-                  <div className="prose max-w-none text-gray-700">
-                    {courseData.about.split("\n\n").map((paragraph, index) => (
-                      <p key={index} className="mb-4 leading-relaxed">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                </section>
 
-                {/* Curriculum */}
-                <section>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                    Curriculum:
-                  </h2>
-                  <div className="space-y-4">
-                    {courseData?.curriculum?.map((module, index) => (
-                      <div key={index}>
-                        <button
-                          onClick={() => handleToggle(index)}
-                          className="flex items-center w-full text-left font-medium text-gray-800 hover:text-blue-700 transition-all"
-                        >
-                          {activeIndex === index ? (
-                            <ChevronDown className="w-4 h-4 mr-2 text-blue-600" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4 mr-2 text-blue-600" />
-                          )}
-                          {module.module}
-                        </button>
-
-                        {activeIndex === index && module.topics.length > 0 && (
-                          <ul className="ml-6 mt-2 space-y-1 text-sm text-gray-700">
-                            {module.topics.map((topic, topicIndex) => (
-                              <li
-                                key={topicIndex}
-                                className="pl-4 border-l border-gray-200"
-                              >
-                                {topic}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Who this course is for */}
-                <section>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                    Who this course is for:
-                  </h2>
-                  <p className="text-gray-700 leading-relaxed">
-                    {courseData.targetAudience}
-                  </p>
-                </section>
-
-                {/* Knowledge Partner */}
-                <section>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                    Knowledge Partner:
-                  </h2>
-                  <p className="text-gray-700 leading-relaxed">
-                    {courseData.knowledgePartner}
-                  </p>
-                </section>
-
-                {/* Sample Certificate */}
-                <section>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                    Sample Certificate:
-                  </h2>
-                  <div className="bg-gradient-to-br from-blue-50 to-green-50 p-8 rounded-lg border-2 border-green-200">
-                    <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-                      <div className="flex justify-center space-x-8 mb-6">
-                        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-bold text-lg">
-                            ASTER
-                          </span>
-                        </div>
-                        <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center">
-                          <span className="text-orange-600 font-bold text-lg">
-                            IISc
-                          </span>
-                        </div>
-                        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
-                          <span className="text-red-600 font-bold text-lg">
-                            ★
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-4">
-                        This is to certify that
-                      </p>
-                      <h3 className="text-2xl font-bold text-green-600 mb-4">
-                        Name Surname
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-2">
-                        has successfully completed
-                      </p>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-6">
-                        Artificial Intelligence in Healthcare - Theory to
-                        Practice
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        Completion of Certificate Programme from 01st October -
-                        25th December 2024
-                      </p>
-                      <div className="flex justify-between items-end mt-8">
-                        <div className="text-left">
-                          <p className="text-xs text-gray-600">
-                            Prof. Programme Director
-                          </p>
-                          <p className="text-xs text-gray-600">
-                            Indian Institute of Science
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-gray-600">
-                            Dr. Chief Executive
-                          </p>
-                          <p className="text-xs text-gray-600">
-                            Aster Health Academy
-                          </p>
-                        </div>
-                      </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                <h3 className="text-2xl font-semibold mb-4 flex items-center">
+                  <Zap className="w-6 h-6 mr-2 text-yellow-400" />
+                  What You'll Learn
+                </h3>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {courseData.outcomes.map((outcome, index) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm leading-relaxed text-blue-100">
+                        {outcome}
+                      </span>
                     </div>
-                  </div>
-                </section>
-
-                {/* Faculty Team */}
-                <section>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-8">
-                    Faculty Team
-                  </h2>
-                  <div className="space-y-8">
-                    {courseData.faculty.map((faculty, index) => (
-                      <div
-                        key={index}
-                        className="flex items-start space-x-6 p-6 bg-white rounded-lg shadow-sm border border-gray-200"
-                      >
-                        <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                          <svg
-                            className="w-12 h-12 text-gray-400"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-blue-600 mb-1">
-                            {faculty.name}
-                          </h3>
-                          <p className="text-gray-900 font-medium mb-1">
-                            {faculty.title}
-                          </p>
-                          <p className="text-gray-600 text-sm mb-3">
-                            {faculty.department}
-                          </p>
-                          <p className="text-gray-700 text-sm leading-relaxed">
-                            {faculty.bio}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* FAQ */}
-                <section>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-8">
-                    Frequently Asked Questions
-                  </h2>
-                  <div className="space-y-4">
-                    {courseData.faqs.map((faq, index) => (
-                      <div
-                        key={index}
-                        className="border border-gray-200 rounded-lg"
-                      >
-                        <button
-                          className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          onClick={() =>
-                            setExpandedFaq(expandedFaq === index ? null : index)
-                          }
-                        >
-                          <span className="font-medium text-gray-900">
-                            {faq.question}
-                          </span>
-                          <svg
-                            className={`w-5 h-5 text-gray-500 transform transition-transform ${
-                              expandedFaq === index ? "rotate-180" : ""
-                            }`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                        </button>
-                        {expandedFaq === index && (
-                          <div className="px-6 pb-4">
-                            <p className="text-gray-700">{faq.answer}</p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Right Column - Application Form */}
+            {/* Right Column - Course Card */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-lg p-6 relative sticky top-6">
-                <div className="absolute -top-2 -right-2">
-                  <span className="bg-red-500 text-white text-xs px-2 py-1 rounded transform rotate-12">
-                    50% OFF
-                  </span>
-                </div>
+              <div className="sticky top-6">
+                <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="relative">
+                    <div className="h-48 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                      <div className="text-center text-white">
+                        <Play className="w-16 h-16 mx-auto mb-2" />
+                        <p className="text-lg font-semibold">Preview Course</p>
+                      </div>
+                    </div>
+                    {courseData.originalPrice && (
+                      <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        {Math.round(
+                          ((courseData.originalPrice - courseData.price) /
+                            courseData.originalPrice) *
+                            100
+                        )}
+                        % OFF
+                      </div>
+                    )}
+                  </div>
 
-                <div className="mb-4">
-                  <div className="w-full h-40 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <svg
-                        className="w-16 h-16 mx-auto mb-2"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
+                  <div className="p-6">
+                    <div className="text-center mb-6">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <span className="text-2xl font-bold text-gray-900">
+                          {formatPrice(courseData.price)}
+                        </span>
+                        {courseData.originalPrice && (
+                          <span className="text-lg text-gray-500 line-through">
+                            {formatPrice(courseData.originalPrice)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex justify-center gap-4 text-sm text-gray-600 mb-4">
+                        <span>{courseData.duration}</span>
+                        <span>•</span>
+                        <span>{courseData.level}</span>
+                      </div>
+                      <button
+                        onClick={() => setShowBuyNowModal(true)}
+                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 mb-3"
                       >
-                        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V21C3 22.11 3.89 23 5 23H19C20.11 23 21 22.11 21 21V11H15C13.9 11 13 10.1 13 9V3H5V21H19V11H21V9ZM15 3V9H21L15 3Z" />
-                      </svg>
-                      <p className="text-lg font-semibold">
-                        AI Healthcare Course
-                      </p>
+                        Buy Now
+                      </button>
+                      <button
+                        onClick={() => setShowEnquiryModal(true)}
+                        className="w-full border-2 border-blue-600 text-blue-600 py-3 px-6 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-200"
+                      >
+                        Enquire Now
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                        <Calendar className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Batch Start Date
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {courseData.batchStartDate}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                        <Eye className="w-5 h-5 text-green-600" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Next Review Date
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {courseData.nextReviewDate}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="text-center mb-6">
-                  <div className="text-sm text-gray-600 mb-2">
-                    Duration: {courseData.duration} • Level: {courseData.level}
-                  </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-2">
-                    {formatPrice(courseData.price)}
-                  </div>
-                  <button className="bg-blue-600 text-white px-6 py-2 rounded-md font-medium hover:bg-blue-700 mb-4">
-                    BUY NOW
-                  </button>
-                </div>
-
-                <div className="mb-6">
-                  <h4 className="font-semibold text-gray-900 mb-2">
-                    Batch Start Date
-                  </h4>
-                  <p className="text-gray-600">{courseData.batchStartDate}</p>
-                </div>
-
-                <div className="mb-6">
-                  <h4 className="font-semibold text-blue-600 mb-2">
-                    Next Application Review Date
-                  </h4>
-                  <p className="text-gray-900 font-medium">
-                    {courseData.nextReviewDate}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-blue-600 mb-4">
-                    Application Form
-                  </h4>
-                  <form onSubmit={handleFormSubmit} className="space-y-4">
-                    <input
-                      type="text"
-                      placeholder="Name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                    <input
-                      type="email"
-                      placeholder="Email"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                    <input
-                      type="tel"
-                      placeholder="Phone"
-                      value={formData.phone}
-                      onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                    <select
-                      value={formData.qualification}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          qualification: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select Qualification</option>
-                      <option value="mbbs">MBBS</option>
-                      <option value="md">MD</option>
-                      <option value="ms">MS</option>
-                      <option value="bds">BDS</option>
-                      <option value="other">Other</option>
-                    </select>
-                    <button
-                      type="submit"
-                      className="w-full bg-green-600 text-white py-2 px-4 rounded-md font-medium hover:bg-green-700"
-                    >
-                      Enquire Now
-                    </button>
-                  </form>
                 </div>
               </div>
             </div>
@@ -677,297 +383,290 @@ if (!courseData) return <p>Loading...</p>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Course Details */}
-          {/* <div className="lg:col-span-2 space-y-12">
-           
-            <section>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                About the course:
+        <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+          <div className="lg:col-span-2 space-y-12">
+            {/* About Section */}
+            <section className="bg-white rounded-xl shadow-sm p-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+                <BookOpen className="w-8 h-8 mr-3 text-blue-600" />
+                About the Course
               </h2>
-              <div className="prose max-w-none text-gray-700">
+              <div className="prose max-w-none text-gray-700 leading-relaxed">
                 {courseData.about.split("\n\n").map((paragraph, index) => (
-                  <p key={index} className="mb-4 leading-relaxed">
+                  <p key={index} className="mb-4 text-gray-600 leading-7">
                     {paragraph}
                   </p>
                 ))}
               </div>
             </section>
 
-
-            <section>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Curriculum:
+            {/* Enhanced Curriculum */}
+            <section className="bg-white rounded-xl shadow-sm p-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center">
+                <GraduationCap className="w-8 h-8 mr-3 text-purple-600" />
+                Curriculum
               </h2>
               <div className="space-y-4">
                 {courseData.curriculum.map((module, index) => (
                   <div
                     key={index}
-                    className="border border-gray-200 rounded-lg p-4"
-                  >
-                    <h4 className="font-semibold text-gray-900 mb-2">
-                      {module.module}
-                    </h4>
-                    {module.topics.length > 0 && (
-                      <ul className="ml-6 space-y-1">
-                        {module.topics.map((topic, topicIndex) => (
-                          <li
-                            key={topicIndex}
-                            className="text-gray-700 list-disc"
-                          >
-                            {topic}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            
-            <section>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Who this course is for:
-              </h2>
-              <p className="text-gray-700 leading-relaxed">
-                {courseData.targetAudience}
-              </p>
-            </section>
-
-            
-            <section>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Knowledge Partner:
-              </h2>
-              <p className="text-gray-700 leading-relaxed">
-                {courseData.knowledgePartner}
-              </p>
-            </section>
-
-            
-            <section>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Sample Certificate:
-              </h2>
-              <div className="bg-gradient-to-br from-blue-50 to-green-50 p-8 rounded-lg border-2 border-green-200">
-                <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-                  <div className="flex justify-center space-x-8 mb-6">
-                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-bold text-lg">
-                        ASTER
-                      </span>
-                    </div>
-                    <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-orange-600 font-bold text-lg">
-                        IISc
-                      </span>
-                    </div>
-                    <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
-                      <span className="text-red-600 font-bold text-lg">★</span>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    This is to certify that
-                  </p>
-                  <h3 className="text-2xl font-bold text-green-600 mb-4">
-                    Name Surname
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-2">
-                    has successfully completed
-                  </p>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-6">
-                    Artificial Intelligence in Healthcare - Theory to Practice
-                  </h4>
-                  <p className="text-xs text-gray-500">
-                    Completion of Certificate Programme from 01st October - 25th
-                    December 2024
-                  </p>
-                  <div className="flex justify-between items-end mt-8">
-                    <div className="text-left">
-                      <p className="text-xs text-gray-600">
-                        Prof. Programme Director
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Indian Institute of Science
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-600">
-                        Dr. Chief Executive
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Aster Health Academy
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            
-            <section>
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">
-                Faculty Team
-              </h2>
-              <div className="space-y-8">
-                {courseData.faculty.map((faculty, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start space-x-6 p-6 bg-white rounded-lg shadow-sm border border-gray-200"
-                  >
-                    <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg
-                        className="w-12 h-12 text-gray-400"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-blue-600 mb-1">
-                        {faculty.name}
-                      </h3>
-                      <p className="text-gray-900 font-medium mb-1">
-                        {faculty.title}
-                      </p>
-                      <p className="text-gray-600 text-sm mb-3">
-                        {faculty.department}
-                      </p>
-                      <p className="text-gray-700 text-sm leading-relaxed">
-                        {faculty.bio}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            
-            <section>
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">
-                Frequently Asked Questions
-              </h2>
-              <div className="space-y-4">
-                {courseData.faqs.map((faq, index) => (
-                  <div
-                    key={index}
-                    className="border border-gray-200 rounded-lg"
+                    className="border border-gray-200 rounded-lg overflow-hidden"
                   >
                     <button
-                      className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      onClick={() =>
-                        setExpandedFaq(expandedFaq === index ? null : index)
-                      }
+                      onClick={() => handleToggle(index)}
+                      className="flex items-center justify-between w-full p-6 text-left bg-gradient-to-r from-gray-50 to-blue-50 hover:from-blue-50 hover:to-purple-50 transition-all duration-300"
                     >
-                      <span className="font-medium text-gray-900">
-                        {faq.question}
-                      </span>
-                      <svg
-                        className={`w-5 h-5 text-gray-500 transform transition-transform ${
-                          expandedFaq === index ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                          {index + 1}
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {module.module}
+                        </h3>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full">
+                          {module.topics.length} topics
+                        </span>
+                        {activeIndex === index ? (
+                          <ChevronDown className="w-5 h-5 text-blue-600" />
+                        ) : (
+                          <ChevronRight className="w-5 h-5 text-blue-600" />
+                        )}
+                      </div>
                     </button>
-                    {expandedFaq === index && (
-                      <div className="px-6 pb-4">
-                        <p className="text-gray-700">{faq.answer}</p>
+
+                    {activeIndex === index && (
+                      <div className="p-6 bg-white border-t border-gray-100">
+                        <div className="grid gap-3">
+                          {module.topics.map((topic, topicIndex) => (
+                            <div
+                              key={topicIndex}
+                              className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors"
+                            >
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                              <span className="text-gray-700">{topic}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
             </section>
-          </div> */}
 
-          {/* Right Column - Course Info Sidebar */}
-          {/* <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-lg p-6 sticky top-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
-                Course Information
-              </h3>
+            {/* Target Audience */}
+            <section className="bg-white rounded-xl shadow-sm p-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+                <Users className="w-8 h-8 mr-3 text-green-600" />
+                Who This Course Is For
+              </h2>
+              <p className="text-gray-700 leading-relaxed text-lg">
+                {courseData.targetAudience}
+              </p>
+            </section>
 
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-gray-700">Duration</h4>
-                  <p className="text-gray-900">{courseData.duration}</p>
+            {/* Enhanced Knowledge Partner */}
+            <section className="bg-white rounded-xl shadow-sm p-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center">
+                <Building className="w-8 h-8 mr-3 text-orange-600" />
+                Knowledge Partner
+              </h2>
+              <div className="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
+                <div className="flex-shrink-0">
+                  <div className="w-32 h-32 bg-gradient-to-br from-orange-100 to-red-100 rounded-2xl flex items-center justify-center shadow-lg">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600 mb-1">
+                        IISc
+                      </div>
+                      <div className="text-xs text-orange-500">Bangalore</div>
+                    </div>
+                  </div>
                 </div>
-
-                <div>
-                  <h4 className="font-medium text-gray-700">Level</h4>
-                  <p className="text-gray-900">{courseData.level}</p>
-                </div>
-
-                <div>
-                  <h4 className="font-medium text-gray-700">Price</h4>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatPrice(courseData.price)}
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    {courseData.knowledgePartner.name}
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    {courseData.knowledgePartner.description}
                   </p>
+                  <div className="mt-4 flex justify-center md:justify-start space-x-4">
+                    <div className="bg-orange-100 px-4 py-2 rounded-full">
+                      <span className="text-sm font-medium text-orange-600">
+                        Established 1909
+                      </span>
+                    </div>
+                    <div className="bg-blue-100 px-4 py-2 rounded-full">
+                      <span className="text-sm font-medium text-blue-600">
+                        Top Ranking
+                      </span>
+                    </div>
+                  </div>
                 </div>
+              </div>
+            </section>
 
-                <div>
-                  <h4 className="font-medium text-gray-700">Rating</h4>
-                  <div className="flex items-center">
-                    <StarRating rating={courseData.rating} />
-                    <span className="ml-2 text-sm text-gray-600">
-                      ({courseData.rating})
-                    </span>
+            {/* Sample Certificate with Image */}
+            <section className="bg-white rounded-xl shadow-sm p-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center">
+                <Award className="w-8 h-8 mr-3 text-purple-600" />
+                Sample Certificate
+              </h2>
+              <div
+                className="relative group cursor-pointer"
+                onClick={() => setShowCertificateModal(true)}
+              >
+                <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-lg border-2 border-purple-200 hover:border-purple-400 transition-all duration-300">
+                  <div className="bg-white p-8 rounded-lg shadow-lg text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+
+                    <div className="flex justify-center space-x-8 mb-6">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-bold text-sm">
+                          ASTER
+                        </span>
+                      </div>
+                      <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span className="text-orange-600 font-bold text-sm">
+                          IISc
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600">
+                        This is to certify that
+                      </p>
+                      <h3 className="text-2xl font-bold text-purple-600">
+                        Name Surname
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        has successfully completed
+                      </p>
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {courseData.title}
+                      </h4>
+                      <p className="text-xs text-gray-500">
+                        Completion of Certificate Programme from 01st October -
+                        25th December 2024
+                      </p>
+                    </div>
+
+                    <div className="flex justify-between items-end mt-8 pt-4 border-t border-gray-200">
+                      <div className="text-left">
+                        <p className="text-xs text-gray-600">
+                          Prof. Programme Director
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          Indian Institute of Science
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-600">
+                          Dr. Chief Executive
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          Aster Health Academy
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="font-medium text-gray-700">
-                    Next Review Date
-                  </h4>
-                  <p className="text-gray-900 font-medium">
-                    {courseData.nextReviewDate}
-                  </p>
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 rounded-lg flex items-center justify-center">
+                  <div className="bg-white bg-opacity-0 group-hover:bg-opacity-90 p-4 rounded-full transition-all duration-300">
+                    <Eye className="w-6 h-6 text-gray-600 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                  </div>
                 </div>
               </div>
+              <p className="text-center text-sm text-gray-500 mt-4">
+                Click to view full certificate
+              </p>
+            </section>
 
-              <div className="mt-6 space-y-3">
-                <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors">
-                  Enroll Now
-                </button>
-                <button className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-md font-medium hover:bg-gray-200 transition-colors">
-                  Download Brochure
-                </button>
+            {/* Faculty Team */}
+            <section className="bg-white rounded-xl shadow-sm p-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center">
+                <Users className="w-8 h-8 mr-3 text-indigo-600" />
+                Faculty Team
+              </h2>
+              <div className="grid md:grid-cols-1 gap-6">
+                {courseData.faculty.map((faculty, index) => (
+                  <div
+                    key={index}
+                    className="bg-gradient-to-br from-gray-50 to-blue-50 p-6 rounded-xl hover:shadow-md transition-all duration-300"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-blue-600 mb-1">
+                          {faculty.name}
+                        </h3>
+                        <p className="text-gray-900 font-medium mb-1">
+                          {faculty.title}
+                        </p>
+                        <p className="text-gray-600 text-sm mb-3">
+                          {faculty.department}
+                        </p>
+                        <p className="text-gray-700 text-sm">{faculty.bio}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          </div> */}
+            </section>
+          </div>
         </div>
-
-        {/* Related Courses Section */}
-        <section className="mt-16">
+        {/* FAQ Section */}
+        <section className=" mt-16 bg-white rounded-xl shadow-sm p-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-8">
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-4">
+            {courseData.faqs.map((faq, index) => (
+              <div key={index} className="border border-gray-200 rounded-lg">
+                <button
+                  className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors"
+                  onClick={() =>
+                    setExpandedFaq(expandedFaq === index ? null : index)
+                  }
+                >
+                  <span className="font-medium text-gray-900">
+                    {faq.question}
+                  </span>
+                  <ChevronDown
+                    className={`w-5 h-5 text-gray-500 transform transition-transform ${
+                      expandedFaq === index ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {expandedFaq === index && (
+                  <div className="px-6 pb-4 border-t border-gray-100">
+                    <p className="text-gray-700 pt-4">{faq.answer}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Related Courses */}
+        <section className="mt-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
             Related Courses
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courseData.relatedCourses.map((course, index) => (
               <div
                 key={index}
-                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
               >
                 <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                   <div className="text-center text-white">
-                    <svg
-                      className="w-16 h-16 mx-auto mb-2"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
+                    <BookOpen className="w-12 h-12 mx-auto mb-2" />
                     <p className="text-sm font-medium">Featured Course</p>
                   </div>
                 </div>
@@ -995,7 +694,7 @@ if (!courseData) return <p>Loading...</p>
                     </span>
                   </div>
 
-                  <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors">
+                  <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300">
                     View Details
                   </button>
                 </div>
@@ -1004,8 +703,293 @@ if (!courseData) return <p>Loading...</p>
           </div>
         </section>
       </div>
+
+      {/* Enquiry Modal */}
+      {showEnquiryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Course Enquiry
+                </h2>
+                <button
+                  onClick={() => setShowEnquiryModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleEnquirySubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      First Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={enquiryForm.firstName}
+                      onChange={(e) =>
+                        setEnquiryForm({
+                          ...enquiryForm,
+                          firstName: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={enquiryForm.lastName}
+                      onChange={(e) =>
+                        setEnquiryForm({
+                          ...enquiryForm,
+                          lastName: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={enquiryForm.email}
+                    onChange={(e) =>
+                      setEnquiryForm({ ...enquiryForm, email: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone *
+                  </label>
+                  <input
+                    type="tel"
+                    value={enquiryForm.phone}
+                    onChange={(e) =>
+                      setEnquiryForm({ ...enquiryForm, phone: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Qualification
+                  </label>
+                  <select
+                    value={enquiryForm.qualification}
+                    onChange={(e) =>
+                      setEnquiryForm({
+                        ...enquiryForm,
+                        qualification: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select your qualification</option>
+                    {qualificationOptions.map((q, i) => (
+                      <option key={i} value={q}>
+                        {q}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={enquiryForm.location}
+                    onChange={(e) =>
+                      setEnquiryForm({
+                        ...enquiryForm,
+                        location: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={enquiryForm.agreeToPromotions}
+                    onChange={(e) =>
+                      setEnquiryForm({
+                        ...enquiryForm,
+                        agreeToPromotions: e.target.checked,
+                      })
+                    }
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label className="text-sm text-gray-700">
+                    I agree to receive promotional emails.
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition"
+                >
+                  Submit Enquiry
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCertificateModal && courseData.certificateImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-2xl shadow-lg max-w-3xl w-full">
+            <button
+              onClick={() => setShowCertificateModal(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img
+              src={courseData.certificateImage}
+              alt="Certificate Preview"
+              className="w-full h-auto rounded-b-2xl"
+            />
+          </div>
+        </div>
+      )}
+
+      {showStickyFooter && courseData && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_8px_rgba(0,0,0,0.1)] z-40 border-t border-gray-200 px-4 py-3 md:px-8  ">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 w-full md:w-auto">
+              <p className="font-semibold text-gray-800 text-center md:text-left">
+                {courseData.title}
+              </p>
+              <div className="flex items-center gap-2 text-center md:text-left">
+                <span className="text-xl font-bold text-blue-600">
+                  {formatPrice(courseData.price)}
+                </span>
+                {courseData.originalPrice && (
+                  <span className="text-sm line-through text-gray-400">
+                    {formatPrice(courseData.originalPrice)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2 w-full md:w-auto">
+              <button
+                onClick={() => setShowEnquiryModal(true)}
+                className="flex-1 md:flex-none px-4 py-2 border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition"
+              >
+                Enquire
+              </button>
+              <button
+                onClick={() => setShowBuyNowModal(true)}
+                className="flex-1 md:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+              >
+                Buy Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBuyNowModal && courseData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-lg relative">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Buy Course</h2>
+                <button
+                  onClick={() => setShowBuyNowModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-lg font-medium text-gray-800">
+                  {courseData.title}
+                </p>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-2xl font-bold text-blue-600">
+                    {appliedCoupon
+                      ? formatPrice(courseData.price * 0.9)
+                      : formatPrice(courseData.price)}
+                  </span>
+                  {courseData.originalPrice && (
+                    <span className="text-gray-400 line-through">
+                      {formatPrice(courseData.originalPrice)}
+                    </span>
+                  )}
+                  {appliedCoupon && (
+                    <span className="text-green-600 font-medium text-sm ml-2">
+                      10% OFF Applied
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Coupon Input */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Apply Coupon
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Enter coupon code"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={handleCouponApply}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+
+              {/* Checkout Button */}
+              <button
+                onClick={() => {
+                  alert("Payment process would start here.");
+                  setShowBuyNowModal(false);
+                }}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition"
+              >
+                Proceed to Pay ₹
+                {appliedCoupon
+                  ? Math.round(courseData.price * 0.9)
+                  : courseData.price}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
 export default CourseDetailPage;

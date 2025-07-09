@@ -26,21 +26,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [message, setMessage] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
-  const mockUsers = [
-    {
-      email: "admin@example.com",
-      password: "admin123",
-      role: "admin",
-      name: "Admin User",
-    },
-    {
-      email: "user@example.com",
-      password: "user123",
-      role: "user",
-      name: "Regular User",
-    },
-  ];
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -56,32 +41,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-
-    // setTimeout(() => {
-    //   const user = mockUsers.find(
-    //     (u) => u.email === formData.email && u.password === formData.password
-    //   );
-
-    //   if (user) {
-    //     setMessage(
-    //       `✅ Login successful! Redirecting to ${user.role} dashboard...`
-    //     );
-    //     setTimeout(() => {
-    //       if (onLogin) {
-    //         onLogin(user);
-    //       } else {
-    //         if (user.role == "user") {
-    //           router.push(`/dashboard`);
-    //         } else {
-    //           router.push(`/${user.role}/courses`);
-    //         }
-    //       }
-    //     }, 1500);
-    //   } else {
-    //     setMessage("❌ Invalid email or password");
-    //   }
-    //   setLoading(false);
-    // }, 1000);
     try {
       const response = await login(formData.email, formData.password);
       setMessage("✅ Login successful! Redirecting...");
@@ -90,7 +49,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       } else {
         router.push(`/admin/courses`);
       }
-    //   setTimeout(() => router.push("/dashboard"), 1500);
     } catch (err) {
       setMessage("❌ " + err.message);
     } finally {
